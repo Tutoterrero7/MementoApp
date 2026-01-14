@@ -10,12 +10,18 @@
         android:id="@+id/splashFragment"
         android:name="com.arcides.mementoapp.presentation.splash.SplashFragment"
         android:label="SplashFragment"
-        tools:layout="@layout/fragment_splash" />
+        tools:layout="@layout/fragment_splash">
 
-    <!-- Login Fragment (lo crearemos después) -->
+        <!-- AÑADE ESTA ACCIÓN -->
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+
+    </fragment>
+
+    <!-- Login Fragment -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.arcides.mementoapp.presentation.auth.LoginFragment"
         android:label="LoginFragment" />
-
 </navigation>

@@ -3,7 +3,9 @@ package com.arcides.mementoapp.presentation
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.arcides.mementoapp.databinding.ActivityMainBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
@@ -12,9 +14,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Configurar Navigation Component
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.fragment_container) as NavHostFragment
-        val navController = navHostFragment.navController
+        // ¡NADA MÁS! El FragmentContainerView maneja la navegación automáticamente
     }
 }
