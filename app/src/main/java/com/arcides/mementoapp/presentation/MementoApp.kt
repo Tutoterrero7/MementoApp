@@ -1,5 +1,4 @@
-package com.arcides.mementoapp
-
+package com.arcides.mementoapp.presentation
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
