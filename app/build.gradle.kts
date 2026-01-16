@@ -2,15 +2,14 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // AÑADE ESTA LÍNEA para aplicar el plugin de Google Services:
     alias(libs.plugins.google.services)
+    alias(libs.plugins.hilt)
     id("kotlin-kapt")
-    id("dagger.hilt.android.plugin")
 }
 
 android {
     namespace = "com.arcides.mementoapp"
-    compileSdk = 36  // CORRECCIÓN: Cambia "compileSdk { version = release(36) }" por esto
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.arcides.mementoapp"
@@ -44,11 +43,10 @@ android {
     }
 }
 
-
 dependencies {
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.2")
-    kapt("com.google.dagger:hilt-compiler:2.57.2")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -62,6 +60,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,12 +69,12 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Firebase BOM
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
+    // Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
-
 }
