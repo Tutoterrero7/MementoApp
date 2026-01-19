@@ -1,5 +1,6 @@
 package com.arcides.mementoapp.data.repositories
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import javax.inject.Inject
@@ -14,9 +15,12 @@ class AuthRepository @Inject constructor(
     // 2. Login con email y contraseña
     suspend fun login(email: String, password: String): Result<FirebaseUser> {
         return try {
+            Log.d("AUTH_REPO", "Firebase login con: $email")
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            Log.d("AUTH_REPO", "Login Firebase exitoso: ${result.user?.email}")
             Result.success(result.user!!)
         } catch (e: Exception) {
+            Log.e("AUTH_REPO", "Error Firebase: ${e.message}")
             Result.failure(e)
         }
     }

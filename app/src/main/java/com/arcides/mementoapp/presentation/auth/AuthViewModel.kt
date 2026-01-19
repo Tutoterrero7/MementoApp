@@ -1,5 +1,6 @@
 package com.arcides.mementoapp.presentation.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arcides.mementoapp.data.repositories.AuthRepository
@@ -26,9 +27,8 @@ class AuthViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
-    // Datos del formulario
-    var email = ""
-    var password = ""
+    var email: String = ""
+    var password: String = ""
 
     // Validar si el formulario está completo
     val isFormValid: Boolean
@@ -36,18 +36,27 @@ class AuthViewModel @Inject constructor(
 
     // Función de login
     fun login() {
+        Log.d("AUTH_DEBUG", "Intentando login con: $email")
+        
         if (!isFormValid) {
-            _authState.value = AuthState.Error("Email y contraseña requeridos")
+            _authState.value = AuthState.Error("Email y contraseña requeridos (mínimo 6 caracteres)")
+            Log.d("AUTH_DEBUG", "Formulario inválido")
             return
         }
 
         viewModelScope.launch {
             _authState.value = AuthState.Loading
+            Log.d("AUTH_DEBUG", "Llamando a authRepository.login()")
+            
             val result = authRepository.login(email, password)
-
+            Log.d("AUTH_DEBUG", "Resultado: ${result.isSuccess}, Error: ${result.exceptionOrNull()?.message}")
+            
             _authState.value = when {
-                result.isSuccess -> AuthState.Success("Login exitoso")
-                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error desconocido")
+                result.isSuccess -> {
+                    Log.d("AUTH_DEBUG", "Login exitoso, navegando a Home")
+                    AuthState.Success("Login exitoso")
+                }
+                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error en login")
             }
         }
     }
@@ -68,5 +77,10 @@ class AuthViewModel @Inject constructor(
                 else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error desconocido")
             }
         }
+    }
+
+    // Limpiar estado
+    fun resetState() {
+        _authState.value = AuthState.Idle
     }
 }

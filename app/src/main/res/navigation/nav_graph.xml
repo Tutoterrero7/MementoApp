@@ -12,10 +12,13 @@
         android:label="SplashFragment"
         tools:layout="@layout/fragment_splash">
 
-        <!-- AÑADE ESTA ACCIÓN -->
         <action
             android:id="@+id/action_splashFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+
+        <action
+            android:id="@+id/action_splashFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
 
     </fragment>
 
@@ -23,5 +26,20 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.arcides.mementoapp.presentation.auth.LoginFragment"
-        android:label="LoginFragment" />
+        android:label="LoginFragment"
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_loginFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+
+    </fragment>
+
+    <!-- Home Fragment -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.arcides.mementoapp.presentation.home.HomeFragment"
+        android:label="HomeFragment"
+        tools:layout="@layout/fragment_home" />
+
 </navigation>
