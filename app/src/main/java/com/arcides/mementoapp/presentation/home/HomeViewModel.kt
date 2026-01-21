@@ -21,9 +21,13 @@ class HomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    // Estado de las tareas
-    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
-    val tasks: StateFlow<List<Task>> = _tasks
+    // Estado de las tareas (Flow desde Firestore)
+    val tasks: StateFlow<List<Task>> = taskRepository.getTasksStream()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     // Estado de carga
     private val _isLoading = MutableStateFlow(false)
@@ -33,7 +37,7 @@ class HomeViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
-    // Añade este StateFlow para categorías
+    // StateFlow para categorías
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
         .map { categories -> categories }
         .stateIn(
@@ -42,33 +46,33 @@ class HomeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    init {
-        // Cargar tareas al iniciar
-        loadTasks()
-    }
+    // Crear nueva tarea
+    fun createTask(
+        title: String,
+        description: String = "",
+        priority: Task.Priority = Task.Priority.MEDIUM,
+        categoryId: String = ""
+    ) {
+        if (title.isBlank()) {
+            _message.value = "El título no puede estar vacío"
+            return
+        }
 
-    fun loadTasks() {
-        _isLoading.value = true
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                // TODO: Reemplazar con llamada real al repository
-                // Por ahora, datos de prueba
-                val sampleTasks = listOf(
-                    Task(
-                        id = "1",
-                        title = "Tarea de ejemplo 1",
-                        description = "Esta es una tarea de prueba",
-                        priority = Task.Priority.HIGH
-                    ),
-                    Task(
-                        id = "2",
-                        title = "Tarea de ejemplo 2",
-                        description = "Otra tarea de prueba",
-                        priority = Task.Priority.MEDIUM
-                    )
+                val newTask = Task(
+                    title = title,
+                    description = description,
+                    priority = priority,
+                    categoryId = categoryId, // Corregido: usando categoryId: String
+                    status = Task.TaskStatus.PENDING
                 )
-                _tasks.value = sampleTasks
-                _message.value = "Tareas cargadas"
+
+                taskRepository.createTask(newTask)
+                // Nota: El incremento del contador ya lo hace TaskRepository.createTask
+
+                _message.value = "Tarea creada: $title"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
             } finally {
@@ -77,59 +81,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Crear nueva tarea modificada para incluir categoría
-    fun createTask(
-        title: String,
-        description: String = "",
-        priority: Task.Priority = Task.Priority.MEDIUM,
-        category: Category? = null
-    ) {
-        viewModelScope.launch {
-            try {
-                val newTask = Task(
-                    title = title,
-                    description = description,
-                    priority = priority,
-                    category = category,
-                    status = Task.TaskStatus.PENDING
-                )
-
-                val taskId = taskRepository.createTask(newTask)
-
-                // Incrementar contador de categoría si existe
-                category?.let {
-                    categoryRepository.incrementTaskCount(it.id)
-                }
-
-                _message.value = "Tarea creada: $title"
-                // Nota: loadTasks() debería ser llamado o las tareas deberían observarse desde el repo
-            } catch (e: Exception) {
-                _message.value = "Error: ${e.message}"
-            }
-        }
-    }
-
-    // Cambiar estado de tarea
+    // Cambiar estado de tarea (completar/pendiente)
     fun toggleTaskStatus(taskId: String, isCompleted: Boolean) {
         viewModelScope.launch {
             try {
-                val updatedTasks = _tasks.value.map { task ->
-                    if (task.id == taskId) {
-                        task.copy(
-                            status = if (isCompleted) {
-                                Task.TaskStatus.COMPLETED
-                            } else {
-                                Task.TaskStatus.PENDING
-                            }
-                        )
-                    } else {
-                        task
-                    }
+                val newStatus = if (isCompleted) {
+                    Task.TaskStatus.COMPLETED
+                } else {
+                    Task.TaskStatus.PENDING
                 }
-                _tasks.value = updatedTasks
-                _message.value = if (isCompleted) "Tarea completada" else "Tarea pendiente"
+                taskRepository.toggleTaskStatus(taskId, newStatus)
             } catch (e: Exception) {
-                _message.value = "Error al cambiar estado: ${e.message}"
+                _message.value = "Error: ${e.message}"
             }
         }
     }
@@ -137,12 +100,14 @@ class HomeViewModel @Inject constructor(
     // Eliminar tarea
     fun deleteTask(taskId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val filteredTasks = _tasks.value.filter { it.id != taskId }
-                _tasks.value = filteredTasks
+                taskRepository.deleteTask(taskId)
                 _message.value = "Tarea eliminada"
             } catch (e: Exception) {
-                _message.value = "Error al eliminar: ${e.message}"
+                _message.value = "Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

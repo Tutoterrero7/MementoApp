@@ -10,11 +10,16 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentCategoriesBinding
+import com.arcides.mementoapp.domain.models.Category
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class CategoriesFragment : Fragment() {
@@ -23,6 +28,7 @@ class CategoriesFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: CategoriesViewModel by viewModels()
     private lateinit var categoriesAdapter: CategoriesAdapter
+    private var selectedColorForDialog: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,20 +52,11 @@ class CategoriesFragment : Fragment() {
             findNavController().navigateUp()
         }
 
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                android.R.id.home -> {
-                    findNavController().navigateUp()
-                    true
-                }
-                else -> false
-            }
-        }
-
         // Configurar RecyclerView
         categoriesAdapter = CategoriesAdapter(
             onCategoryClick = { category ->
-                // TODO: Filtrar tareas por categoría
+                // Por ahora no navegamos, solo mostramos el click
+                Snackbar.make(binding.root, "Click en: ${category.name}", Snackbar.LENGTH_SHORT).show()
             },
             onCategoryEdit = { category ->
                 showEditCategoryDialog(category)
@@ -81,7 +78,7 @@ class CategoriesFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.categories.collectLatest { categories ->
                 categoriesAdapter.submitList(categories)
 
@@ -96,7 +93,7 @@ class CategoriesFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.message.collectLatest { message ->
                 message?.let {
                     Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show()
@@ -107,21 +104,74 @@ class CategoriesFragment : Fragment() {
     }
 
     private fun showCreateCategoryDialog() {
-        val dialog = CreateCategoryDialog { name, color ->
-            viewModel.createCategory(name, color)
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_create_category, null)
+        
+        val nameInput = dialogView.findViewById<TextInputEditText>(R.id.nameInput)
+        val colorGrid = dialogView.findViewById<RecyclerView>(R.id.colorGrid)
+        
+        // Configurar grid de colores
+        val colors = Category.DEFAULT_COLORS
+        selectedColorForDialog = colors.first()
+        
+        val adapter = ColorAdapter(colors, selectedColorForDialog) { selectedColor ->
+            selectedColorForDialog = selectedColor
         }
-        dialog.show(parentFragmentManager, "CreateCategoryDialog")
+        
+        colorGrid.layoutManager = GridLayoutManager(requireContext(), 5)
+        colorGrid.adapter = adapter
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setTitle("Nueva Categoría")
+            .setPositiveButton("Crear") { _, _ ->
+                val name = nameInput.text?.toString()?.trim()
+                val color = selectedColorForDialog ?: colors.first()
+                
+                if (!name.isNullOrEmpty()) {
+                    viewModel.createCategory(name, color)
+                } else {
+                    Snackbar.make(binding.root, "El nombre es requerido", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun showEditCategoryDialog(category: Category) {
-        val dialog = CreateCategoryDialog(
-            initialCategory = category,
-            onCreateCategory = { name, color ->
-                val updatedCategory = category.copy(name = name, color = color)
-                viewModel.updateCategory(updatedCategory)
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_create_category, null)
+        
+        val nameInput = dialogView.findViewById<TextInputEditText>(R.id.nameInput)
+        val colorGrid = dialogView.findViewById<RecyclerView>(R.id.colorGrid)
+        
+        // Pre-llenar datos
+        nameInput.setText(category.name)
+        selectedColorForDialog = category.color
+        
+        // Configurar grid de colores
+        val colors = Category.DEFAULT_COLORS
+        val adapter = ColorAdapter(colors, category.color) { selectedColor ->
+            selectedColorForDialog = selectedColor
+        }
+        
+        colorGrid.layoutManager = GridLayoutManager(requireContext(), 5)
+        colorGrid.adapter = adapter
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setTitle("Editar Categoría")
+            .setPositiveButton("Guardar") { _, _ ->
+                val name = nameInput.text?.toString()?.trim()
+                val color = selectedColorForDialog ?: category.color
+                
+                if (!name.isNullOrEmpty()) {
+                    val updatedCategory = category.copy(name = name, color = color)
+                    viewModel.updateCategory(updatedCategory)
+                }
             }
-        )
-        dialog.show(parentFragmentManager, "EditCategoryDialog")
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun showDeleteCategoryDialog(category: Category) {

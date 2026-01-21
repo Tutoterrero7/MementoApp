@@ -79,6 +79,19 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // Función para resetear contraseña
+    fun resetPassword(email: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.resetPassword(email)
+            
+            _authState.value = when {
+                result.isSuccess -> AuthState.Success("Email de recuperación enviado")
+                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error")
+            }
+        }
+    }
+
     // Limpiar estado
     fun resetState() {
         _authState.value = AuthState.Idle

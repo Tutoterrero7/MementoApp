@@ -3,10 +3,11 @@ package com.arcides.mementoapp.presentation.auth
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentLoginBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -46,51 +48,67 @@ class LoginFragment : Fragment() {
 
     private fun setupViews() {
         binding.loginButton.setOnClickListener {
-            // TEMPORAL: Usar datos de prueba
-            viewModel.email = "test@test.com"
-            viewModel.password = "123456"
-            binding.emailEditText.setText("test@test.com")
-            binding.passwordEditText.setText("123456")
-
-            viewModel.login()
+            // Obtener valores REALES de los campos
+            viewModel.email = binding.emailEditText.text.toString().trim()
+            viewModel.password = binding.passwordEditText.text.toString()
+            
+            if (viewModel.isFormValid) {
+                viewModel.login()
+            } else {
+                Snackbar.make(binding.root, "Por favor, completa todos los campos", Snackbar.LENGTH_SHORT).show()
+            }
         }
 
         binding.registerButton.setOnClickListener {
-            viewModel.register()
+            // Asegurar que el ViewModel tiene los datos actuales antes de registrar
+            viewModel.email = binding.emailEditText.text.toString().trim()
+            viewModel.password = binding.passwordEditText.text.toString()
+            
+            if (viewModel.isFormValid) {
+                viewModel.register()
+            } else {
+                Snackbar.make(binding.root, "Datos de registro inválidos", Snackbar.LENGTH_SHORT).show()
+            }
         }
 
         binding.forgotPasswordText.setOnClickListener {
-            Snackbar.make(binding.root, "Funcionalidad próximamente", Snackbar.LENGTH_SHORT).show()
-        }
-
-        // PRUEBA DIAGNÓSTICA - Botón para debug
-        binding.loginButton.setOnLongClickListener {
-            testFirebaseConnection()
-            true
+            showResetPasswordDialog()
         }
     }
 
-    private fun testFirebaseConnection() {
-        Log.d("DEBUG_LOGIN", "=== INICIANDO DIAGNÓSTICO ===")
-        
-        // 1. Verificar campos
-        val email = binding.emailEditText.text.toString()
-        val password = binding.passwordEditText.text.toString()
-        Log.d("DEBUG_LOGIN", "Email: $email, Password: ${password.length} chars")
-        
-        // 2. Verificar Firebase Auth
-        try {
-            val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
-            Log.d("DEBUG_LOGIN", "Firebase Auth inicializado: ${auth.app.name}")
-            Log.d("DEBUG_LOGIN", "Current user: ${auth.currentUser?.email ?: "Ninguno"}")
-        } catch (e: Exception) {
-            Log.e("DEBUG_LOGIN", "Error Firebase: ${e.message}")
+    private fun showResetPasswordDialog() {
+        val container = FrameLayout(requireContext())
+        val input = EditText(requireContext()).apply {
+            hint = "Email"
+            inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            // Añadir márgenes para que no pegue a los bordes del diálogo
+            val lp = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = 40
+                marginEnd = 40
+                topMargin = 20
+            }
+            layoutParams = lp
         }
-        
-        // 3. Verificar ViewModel
-        Log.d("DEBUG_LOGIN", "ViewModel email: ${viewModel.email}")
-        Log.d("DEBUG_LOGIN", "ViewModel password length: ${viewModel.password.length}")
-        Log.d("DEBUG_LOGIN", "isFormValid: ${viewModel.isFormValid}")
+        container.addView(input)
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Recuperar contraseña")
+            .setMessage("Ingresa tu email para recibir un enlace de recuperación")
+            .setView(container)
+            .setPositiveButton("Enviar") { _, _ ->
+                val email = input.text.toString().trim()
+                
+                if (email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    viewModel.resetPassword(email)
+                } else {
+                    Snackbar.make(binding.root, "Email inválido", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun setupTextWatchers() {
@@ -98,7 +116,7 @@ class LoginFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                viewModel.email = binding.emailEditText.text.toString()
+                viewModel.email = binding.emailEditText.text.toString().trim()
                 viewModel.password = binding.passwordEditText.text.toString()
                 binding.loginButton.isEnabled = viewModel.isFormValid
             }

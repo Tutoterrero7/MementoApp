@@ -4,16 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
+import android.widget.Button
+import android.widget.RadioGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentHomeBinding
+import com.arcides.mementoapp.domain.models.Category
+import com.arcides.mementoapp.domain.models.Task
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -49,6 +55,23 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupUI() {
+        // Configurar Toolbar con el menú
+        binding.toolbar.inflateMenu(R.menu.home_menu)
+        binding.toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_categories -> {
+                    findNavController().navigate(R.id.action_homeFragment_to_categoriesFragment)
+                    true
+                }
+                R.id.action_logout -> {
+                    auth.signOut()
+                    findNavController().navigate(R.id.loginFragment)
+                    true
+                }
+                else -> false
+            }
+        }
+
         // Configurar RecyclerView
         tasksAdapter = TasksAdapter(
             onTaskChecked = { taskId, isChecked ->
@@ -66,7 +89,6 @@ class HomeFragment : Fragment() {
 
         // Swipe to refresh
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.loadTasks()
             binding.swipeRefreshLayout.isRefreshing = false
         }
 
@@ -105,19 +127,77 @@ class HomeFragment : Fragment() {
     }
 
     private fun showAddTaskDialog() {
-        val editText = EditText(requireContext()).apply {
-            hint = "Título de la tarea"
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_create_task, null)
+        
+        val titleInput = dialogView.findViewById<TextInputEditText>(R.id.titleInput)
+        val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.descriptionInput)
+        val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
+        val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
+        
+        var selectedCategoryId = ""
+        var selectedPriority = Task.Priority.MEDIUM
+        
+        // Configurar botón de categoría
+        categoryButton.setOnClickListener {
+            showCategorySelectionDialog(selectedCategoryId) { category ->
+                selectedCategoryId = category?.id ?: ""
+                categoryButton.text = category?.name ?: "Seleccionar categoría"
+            }
         }
-
+        
+        // Configurar prioridad
+        priorityGroup.setOnCheckedChangeListener { _, checkedId ->
+            selectedPriority = when (checkedId) {
+                R.id.priorityLow -> Task.Priority.LOW
+                R.id.priorityHigh -> Task.Priority.HIGH
+                else -> Task.Priority.MEDIUM
+            }
+        }
+        
         MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
             .setTitle("Nueva Tarea")
-            .setMessage("¿Qué necesitas recordar?")
-            .setView(editText)
             .setPositiveButton("Crear") { _, _ ->
-                val title = editText.text.toString().trim()
-                if (title.isNotEmpty()) {
-                    viewModel.createTask(title)
+                val title = titleInput.text?.toString()?.trim()
+                val description = descriptionInput.text?.toString()?.trim()
+                
+                if (!title.isNullOrEmpty()) {
+                    viewModel.createTask(
+                        title = title,
+                        description = description ?: "",
+                        priority = selectedPriority,
+                        categoryId = selectedCategoryId
+                    )
+                } else {
+                    Snackbar.make(binding.root, "El título es requerido", Snackbar.LENGTH_SHORT).show()
                 }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun showCategorySelectionDialog(
+        currentCategoryId: String,
+        onCategorySelected: (Category?) -> Unit
+    ) {
+        val categories = viewModel.categories.value
+        
+        if (categories.isEmpty()) {
+            Snackbar.make(binding.root, "No hay categorías creadas", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        
+        val categoryNames = categories.map { it.name }.toTypedArray()
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Seleccionar categoría")
+            .setItems(categoryNames) { _, which ->
+                val selectedCategory = categories[which]
+                onCategorySelected(selectedCategory)
+            }
+            .setNeutralButton("Sin categoría") { _, _ ->
+                onCategorySelected(null)
             }
             .setNegativeButton("Cancelar", null)
             .show()

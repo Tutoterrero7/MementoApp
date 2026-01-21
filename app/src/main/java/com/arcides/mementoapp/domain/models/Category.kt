@@ -1,4 +1,3 @@
-// domain/models/Category.kt
 package com.arcides.mementoapp.domain.models
 
 import android.os.Parcelable
@@ -8,13 +7,14 @@ import kotlinx.parcelize.Parcelize
 data class Category(
     val id: String = "",
     val name: String = "",
-    val color: String = "#2196F3", // Color hexadecimal
+    val color: String = "#2196F3", // Color en hexadecimal
     val userId: String = "",
-    val taskCount: Int = 0
+    val taskCount: Int = 0,
+    val createdAt: Long = System.currentTimeMillis()
 ) : Parcelable {
 
-    // Colores predefinidos (Material Design)
     companion object {
+        // Colores predefinidos (Material Design)
         val DEFAULT_COLORS = listOf(
             "#2196F3", // Blue
             "#4CAF50", // Green
@@ -26,6 +26,14 @@ data class Category(
             "#FFC107", // Amber
             "#795548", // Brown
             "#607D8B"  // Blue Grey
+        )
+
+        // Categorías por defecto
+        fun defaultCategories(): List<Category> = listOf(
+            Category(name = "Personal", color = "#2196F3"),
+            Category(name = "Trabajo", color = "#4CAF50"),
+            Category(name = "Estudio", color = "#FF9800"),
+            Category(name = "Hogar", color = "#F44336")
         )
     }
 }

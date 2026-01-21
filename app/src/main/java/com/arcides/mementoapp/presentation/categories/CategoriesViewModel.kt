@@ -26,6 +26,10 @@ class CategoriesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    // Estado de carga
+    private val _isLoading = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isLoading = _isLoading as kotlinx.coroutines.flow.StateFlow<Boolean>
+
     // Mensajes
     private val _message = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     val message = _message as kotlinx.coroutines.flow.StateFlow<String?>
@@ -38,6 +42,7 @@ class CategoriesViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val newCategory = Category(
                     name = name.trim(),
@@ -47,6 +52,8 @@ class CategoriesViewModel @Inject constructor(
                 _message.value = "Categoría creada: $name"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -66,9 +73,24 @@ class CategoriesViewModel @Inject constructor(
     // Eliminar categoría
     fun deleteCategory(categoryId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 categoryRepository.deleteCategory(categoryId)
                 _message.value = "Categoría eliminada"
+            } catch (e: Exception) {
+                _message.value = "Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Crear categorías por defecto
+    fun createDefaultCategories() {
+        viewModelScope.launch {
+            try {
+                categoryRepository.createDefaultCategoriesIfNeeded()
+                _message.value = "Categorías por defecto creadas"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
             }

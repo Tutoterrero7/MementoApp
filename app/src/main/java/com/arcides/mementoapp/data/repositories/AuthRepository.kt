@@ -35,7 +35,17 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    // 4. Cerrar sesión
+    // 4. Resetear contraseña
+    suspend fun resetPassword(email: String): Result<Unit> {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // 5. Cerrar sesión
     fun logout() {
         firebaseAuth.signOut()
     }

@@ -1,4 +1,3 @@
-// data/repositories/CategoryRepository.kt
 package com.arcides.mementoapp.data.repositories
 
 import com.arcides.mementoapp.domain.models.Category
@@ -42,14 +41,7 @@ class CategoryRepository @Inject constructor(
 
                 val categories = snapshot?.documents?.mapNotNull { document ->
                     try {
-                        val data = document.data ?: return@mapNotNull null
-                        Category(
-                            id = document.id,
-                            name = data["name"] as? String ?: "",
-                            color = data["color"] as? String ?: "#2196F3",
-                            userId = data["userId"] as? String ?: "",
-                            taskCount = (data["taskCount"] as? Long ?: 0).toInt()
-                        )
+                        document.toObject<Category>()?.copy(id = document.id)
                     } catch (e: Exception) {
                         null
                     }
@@ -64,58 +56,64 @@ class CategoryRepository @Inject constructor(
     // 2. Crear categoría
     suspend fun createCategory(category: Category): String {
         val document = getCategoriesCollection().document()
-        val categoryWithId = category.copy(id = document.id)
-
-        val categoryMap = hashMapOf<String, Any>(
-            "id" to categoryWithId.id,
-            "name" to categoryWithId.name,
-            "color" to categoryWithId.color,
-            "userId" to auth.currentUser?.uid ?: "",
-            "taskCount" to 0
+        val categoryWithId = category.copy(
+            id = document.id,
+            userId = auth.currentUser?.uid ?: ""
         )
 
-        document.set(categoryMap).await()
+        document.set(categoryWithId).await()
         return document.id
     }
 
     // 3. Actualizar categoría
     suspend fun updateCategory(category: Category) {
-        val categoryMap = hashMapOf<String, Any>(
-            "name" to category.name,
-            "color" to category.color
-        )
-
         getCategoriesCollection()
             .document(category.id)
-            .update(categoryMap)
+            .set(category)
             .await()
     }
 
     // 4. Eliminar categoría
     suspend fun deleteCategory(categoryId: String) {
-        // Primero, actualizar todas las tareas que usan esta categoría
-        // (Lo implementaremos después)
-
-        // Luego eliminar la categoría
         getCategoriesCollection()
             .document(categoryId)
             .delete()
             .await()
     }
 
-    // 5. Incrementar contador de tareas
+    // 5. Incrementar contador de tareas en categoría
     suspend fun incrementTaskCount(categoryId: String) {
-        getCategoriesCollection()
-            .document(categoryId)
-            .update("taskCount", FieldValue.increment(1))
-            .await()
+        if (categoryId.isNotBlank()) {
+            getCategoriesCollection()
+                .document(categoryId)
+                .update("taskCount", FieldValue.increment(1))
+                .await()
+        }
     }
 
-    // 6. Decrementar contador de tareas
+    // 6. Decrementar contador de tareas en categoría
     suspend fun decrementTaskCount(categoryId: String) {
-        getCategoriesCollection()
-            .document(categoryId)
-            .update("taskCount", FieldValue.increment(-1))
-            .await()
+        if (categoryId.isNotBlank()) {
+            getCategoriesCollection()
+                .document(categoryId)
+                .update("taskCount", FieldValue.increment(-1))
+                .await()
+        }
+    }
+
+    // 7. Verificar si el usuario tiene categorías
+    suspend fun hasCategories(): Boolean {
+        val snapshot = getCategoriesCollection().limit(1).get().await()
+        return !snapshot.isEmpty
+    }
+
+    // 8. Crear categorías por defecto
+    suspend fun createDefaultCategoriesIfNeeded() {
+        if (!hasCategories()) {
+            val defaultCats = Category.defaultCategories()
+            for (category in defaultCats) {
+                createCategory(category)
+            }
+        }
     }
 }
