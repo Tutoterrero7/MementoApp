@@ -9,7 +9,7 @@ data class Task(
     val dueDate: Date? = null,
     val priority: Priority = Priority.MEDIUM,
     val status: TaskStatus = TaskStatus.PENDING,
-    val categoryId: String? = null,
+    val category: Category? = null,
     val userId: String = "", // Para filtrar por usuario
     val createdAt: Date = Date()
 ) {
