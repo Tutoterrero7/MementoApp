@@ -25,7 +25,7 @@ class HomeViewModel @Inject constructor(
     val tasks: StateFlow<List<Task>> = taskRepository.getTasksStream()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly, // Cambiado a Eagerly para que cargue de inmediato
             initialValue = emptyList()
         )
 
@@ -39,12 +39,26 @@ class HomeViewModel @Inject constructor(
 
     // StateFlow para categorías
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
-        .map { categories -> categories }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly, // Importante: Eagerly activa el flujo de inmediato
             initialValue = emptyList()
         )
+
+    init {
+        // Asegurar que existan categorías por defecto al iniciar la app
+        createDefaultCategories()
+    }
+
+    private fun createDefaultCategories() {
+        viewModelScope.launch {
+            try {
+                categoryRepository.createDefaultCategoriesIfNeeded()
+            } catch (e: Exception) {
+                // Silencioso, si falla no bloqueamos la app
+            }
+        }
+    }
 
     // Crear nueva tarea
     fun createTask(
@@ -65,13 +79,11 @@ class HomeViewModel @Inject constructor(
                     title = title,
                     description = description,
                     priority = priority,
-                    categoryId = categoryId, // Corregido: usando categoryId: String
+                    categoryId = categoryId,
                     status = Task.TaskStatus.PENDING
                 )
 
                 taskRepository.createTask(newTask)
-                // Nota: El incremento del contador ya lo hace TaskRepository.createTask
-
                 _message.value = "Tarea creada: $title"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
@@ -81,7 +93,37 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Cambiar estado de tarea (completar/pendiente)
+    // Actualizar tarea existente
+    fun updateTask(
+        id: String,
+        title: String,
+        description: String,
+        priority: Task.Priority,
+        categoryId: String,
+        status: Task.TaskStatus
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val updatedTask = Task(
+                    id = id,
+                    title = title,
+                    description = description,
+                    priority = priority,
+                    categoryId = categoryId,
+                    status = status
+                )
+                taskRepository.updateTask(updatedTask)
+                _message.value = "Tarea actualizada"
+            } catch (e: Exception) {
+                _message.value = "Error al actualizar: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Cambiar estado de tarea
     fun toggleTaskStatus(taskId: String, isCompleted: Boolean) {
         viewModelScope.launch {
             try {
@@ -112,7 +154,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Limpiar mensajes
     fun clearMessage() {
         _message.value = null
     }

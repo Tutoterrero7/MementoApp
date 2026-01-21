@@ -77,6 +77,9 @@ class HomeFragment : Fragment() {
             onTaskChecked = { taskId, isChecked ->
                 viewModel.toggleTaskStatus(taskId, isChecked)
             },
+            onTaskEdit = { task ->
+                showEditTaskDialog(task)
+            },
             onTaskDeleted = { taskId ->
                 showDeleteConfirmation(taskId)
             }
@@ -171,6 +174,72 @@ class HomeFragment : Fragment() {
                     )
                 } else {
                     Snackbar.make(binding.root, "El título es requerido", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun showEditTaskDialog(task: Task) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_create_task, null)
+        
+        val titleInput = dialogView.findViewById<TextInputEditText>(R.id.titleInput)
+        val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.descriptionInput)
+        val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
+        val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
+        
+        // Rellenar con datos actuales
+        titleInput.setText(task.title)
+        descriptionInput.setText(task.description)
+        
+        var selectedCategoryId = task.categoryId
+        var selectedPriority = task.priority
+        
+        // Seleccionar prioridad en RadioGroup
+        when (task.priority) {
+            Task.Priority.LOW -> priorityGroup.check(R.id.priorityLow)
+            Task.Priority.HIGH -> priorityGroup.check(R.id.priorityHigh)
+            Task.Priority.MEDIUM -> priorityGroup.check(R.id.priorityMedium)
+        }
+
+        // Mostrar nombre de categoría actual si tiene
+        if (selectedCategoryId.isNotBlank()) {
+            val category = viewModel.categories.value.find { it.id == selectedCategoryId }
+            categoryButton.text = category?.name ?: "Seleccionar categoría"
+        }
+        
+        categoryButton.setOnClickListener {
+            showCategorySelectionDialog(selectedCategoryId) { category ->
+                selectedCategoryId = category?.id ?: ""
+                categoryButton.text = category?.name ?: "Seleccionar categoría"
+            }
+        }
+        
+        priorityGroup.setOnCheckedChangeListener { _, checkedId ->
+            selectedPriority = when (checkedId) {
+                R.id.priorityLow -> Task.Priority.LOW
+                R.id.priorityHigh -> Task.Priority.HIGH
+                else -> Task.Priority.MEDIUM
+            }
+        }
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setTitle("Editar Tarea")
+            .setPositiveButton("Guardar") { _, _ ->
+                val title = titleInput.text?.toString()?.trim() ?: ""
+                val description = descriptionInput.text?.toString()?.trim() ?: ""
+                
+                if (title.isNotEmpty()) {
+                    viewModel.updateTask(
+                        id = task.id,
+                        title = title,
+                        description = description,
+                        priority = selectedPriority,
+                        categoryId = selectedCategoryId,
+                        status = task.status
+                    )
                 }
             }
             .setNegativeButton("Cancelar", null)

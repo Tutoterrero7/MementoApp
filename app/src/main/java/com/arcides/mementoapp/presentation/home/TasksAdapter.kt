@@ -10,6 +10,7 @@ import com.arcides.mementoapp.domain.models.Task
 
 class TasksAdapter(
     private val onTaskChecked: (String, Boolean) -> Unit,
+    private val onTaskEdit: (Task) -> Unit,
     private val onTaskDeleted: (String) -> Unit
 ) : ListAdapter<Task, TasksAdapter.TaskViewHolder>(TaskDiffCallback()) {
 
@@ -48,6 +49,10 @@ class TasksAdapter(
             // Listeners
             binding.taskCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 onTaskChecked(task.id, isChecked)
+            }
+
+            binding.editButton.setOnClickListener {
+                onTaskEdit(task)
             }
 
             binding.deleteButton.setOnClickListener {

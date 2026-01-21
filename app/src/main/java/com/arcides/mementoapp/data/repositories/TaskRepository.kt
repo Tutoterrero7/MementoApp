@@ -93,6 +93,33 @@ class TaskRepository @Inject constructor(
         
         return document.id
     }
+
+    // 2.5 Actualizar tarea existente
+    suspend fun updateTask(task: Task) {
+        // Obtener la tarea antigua para ver si cambió la categoría
+        val oldTaskDoc = getTasksCollection().document(task.id).get().await()
+        val oldCategoryId = oldTaskDoc.getString("categoryId") ?: ""
+
+        val taskMap = hashMapOf<String, Any>(
+            "title" to task.title,
+            "description" to task.description,
+            "priority" to task.priority.name,
+            "status" to task.status.name,
+            "categoryId" to task.categoryId
+        )
+
+        getTasksCollection().document(task.id).update(taskMap).await()
+
+        // Si la categoría cambió, actualizar contadores
+        if (oldCategoryId != task.categoryId) {
+            if (oldCategoryId.isNotBlank()) {
+                categoryRepository.decrementTaskCount(oldCategoryId)
+            }
+            if (task.categoryId.isNotBlank()) {
+                categoryRepository.incrementTaskCount(task.categoryId)
+            }
+        }
+    }
     
     // 3. Cambiar estado de tarea
     suspend fun toggleTaskStatus(taskId: String, newStatus: Task.TaskStatus) {
