@@ -2,17 +2,23 @@ package com.arcides.mementoapp.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arcides.mementoapp.data.repositories.CategoryRepository
 import com.arcides.mementoapp.data.repositories.TaskRepository
+import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     // Estado de las tareas
@@ -26,6 +32,15 @@ class HomeViewModel @Inject constructor(
     // Mensajes de error/éxito
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
+
+    // Añade este StateFlow para categorías
+    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
+        .map { categories -> categories }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     init {
         // Cargar tareas al iniciar
@@ -62,20 +77,34 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Crear nueva tarea
-    fun createTask(title: String, description: String = "") {
+    // Crear nueva tarea modificada para incluir categoría
+    fun createTask(
+        title: String,
+        description: String = "",
+        priority: Task.Priority = Task.Priority.MEDIUM,
+        category: Category? = null
+    ) {
         viewModelScope.launch {
             try {
                 val newTask = Task(
-                    id = System.currentTimeMillis().toString(), // ID temporal
                     title = title,
                     description = description,
+                    priority = priority,
+                    category = category,
                     status = Task.TaskStatus.PENDING
                 )
-                _tasks.value = _tasks.value + newTask
+
+                val taskId = taskRepository.createTask(newTask)
+
+                // Incrementar contador de categoría si existe
+                category?.let {
+                    categoryRepository.incrementTaskCount(it.id)
+                }
+
                 _message.value = "Tarea creada: $title"
+                // Nota: loadTasks() debería ser llamado o las tareas deberían observarse desde el repo
             } catch (e: Exception) {
-                _message.value = "Error al crear tarea: ${e.message}"
+                _message.value = "Error: ${e.message}"
             }
         }
     }
