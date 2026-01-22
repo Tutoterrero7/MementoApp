@@ -1,6 +1,9 @@
 package com.arcides.mementoapp.presentation.home
 
+import android.graphics.Color
+import android.graphics.Paint
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -32,8 +35,19 @@ class TasksAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(task: Task) {
+            val isCompleted = task.status == Task.TaskStatus.COMPLETED
+            
             binding.taskTitle.text = task.title
             binding.taskDescription.text = task.description
+            
+            // Estilo según estado (completado o no)
+            if (isCompleted) {
+                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.root.alpha = 0.6f
+            } else {
+                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.root.alpha = 1.0f
+            }
 
             // Prioridad
             val priorityText = when (task.priority) {
@@ -42,9 +56,22 @@ class TasksAdapter(
                 Task.Priority.LOW -> "BAJA"
             }
             binding.taskPriority.text = priorityText
+            
+            // Categoría Badge (Mejora: Color y Nombre)
+            if (task.category != null) {
+                binding.categoryBadge.visibility = View.VISIBLE
+                binding.categoryBadge.text = task.category.name.uppercase()
+                try {
+                    binding.categoryBadge.background.setTint(Color.parseColor(task.category.color))
+                } catch (e: Exception) {
+                    binding.categoryBadge.background.setTint(Color.GRAY)
+                }
+            } else {
+                binding.categoryBadge.visibility = View.GONE
+            }
 
             // Estado (checkbox)
-            binding.taskCheckbox.isChecked = task.status == Task.TaskStatus.COMPLETED
+            binding.taskCheckbox.isChecked = isCompleted
 
             // Listeners
             binding.taskCheckbox.setOnCheckedChangeListener { _, isChecked ->

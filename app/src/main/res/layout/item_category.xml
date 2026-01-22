@@ -12,8 +12,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:padding="16dp">
 
         <!-- Indicador de Color -->
@@ -24,10 +24,10 @@
             android:background="@android:color/holo_blue_light" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="290dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="16dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -42,9 +42,9 @@
                 android:id="@+id/taskCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:text="0 tareas"
                 android:textColor="?android:attr/textColorSecondary"
-                android:text="0 tareas" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -53,16 +53,16 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_edit"
-            android:contentDescription="Editar" />
+            android:contentDescription="Editar"
+            android:src="@android:drawable/ic_menu_edit" />
 
         <ImageButton
             android:id="@+id/deleteButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_delete"
-            android:contentDescription="Eliminar" />
+            android:contentDescription="Eliminar"
+            android:src="@android:drawable/ic_menu_delete" />
 
     </LinearLayout>
 

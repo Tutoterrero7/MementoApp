@@ -10,7 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,117 +21,98 @@ class HomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    // Estado de las tareas (Flow desde Firestore)
-    val tasks: StateFlow<List<Task>> = taskRepository.getTasksStream()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly, // Cambiado a Eagerly para que cargue de inmediato
-            initialValue = emptyList()
-        )
+    enum class TaskFilter { ALL, PENDING, COMPLETED }
 
-    // Estado de carga
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    sealed class HomeUiState {
+        object Loading : HomeUiState()
+        data class Success(val tasks: List<Task>) : HomeUiState()
+        data class Error(val message: String) : HomeUiState()
+    }
 
-    // Mensajes de error/éxito
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message
+    // Filtro actual
+    private val _currentFilter = MutableStateFlow(TaskFilter.ALL)
+    val currentFilter: StateFlow<TaskFilter> = _currentFilter
 
-    // StateFlow para categorías
+    // Flujo de categorías
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly, // Importante: Eagerly activa el flujo de inmediato
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
 
+    // Estado centralizado con filtrado dinámico
+    val uiState: StateFlow<HomeUiState> = combine(
+        taskRepository.getTasksStream(),
+        categories,
+        _currentFilter
+    ) { tasks, categories, filter ->
+        val enrichedTasks = tasks.map { task ->
+            task.copy(category = categories.find { it.id == task.categoryId })
+        }
+        
+        val filteredTasks = when (filter) {
+            TaskFilter.ALL -> enrichedTasks
+            TaskFilter.PENDING -> enrichedTasks.filter { it.status != Task.TaskStatus.COMPLETED }
+            TaskFilter.COMPLETED -> enrichedTasks.filter { it.status == Task.TaskStatus.COMPLETED }
+        }
+        
+        HomeUiState.Success(filteredTasks)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState.Loading
+    )
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message
+
     init {
-        // Asegurar que existan categorías por defecto al iniciar la app
         createDefaultCategories()
+    }
+
+    fun setFilter(filter: TaskFilter) {
+        _currentFilter.value = filter
     }
 
     private fun createDefaultCategories() {
         viewModelScope.launch {
             try {
                 categoryRepository.createDefaultCategoriesIfNeeded()
-            } catch (e: Exception) {
-                // Silencioso, si falla no bloqueamos la app
-            }
+            } catch (e: Exception) { /* Silencioso */ }
         }
     }
 
-    // Crear nueva tarea
-    fun createTask(
-        title: String,
-        description: String = "",
-        priority: Task.Priority = Task.Priority.MEDIUM,
-        categoryId: String = ""
-    ) {
+    fun createTask(title: String, description: String = "", priority: Task.Priority = Task.Priority.MEDIUM, categoryId: String = "") {
         if (title.isBlank()) {
-            _message.value = "El título no puede estar vacío"
+            _message.value = "El título es requerido"
             return
         }
-
         viewModelScope.launch {
-            _isLoading.value = true
             try {
-                val newTask = Task(
-                    title = title,
-                    description = description,
-                    priority = priority,
-                    categoryId = categoryId,
-                    status = Task.TaskStatus.PENDING
-                )
-
+                val newTask = Task(title = title, description = description, priority = priority, categoryId = categoryId)
                 taskRepository.createTask(newTask)
-                _message.value = "Tarea creada: $title"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
-            } finally {
-                _isLoading.value = false
             }
         }
     }
 
-    // Actualizar tarea existente
-    fun updateTask(
-        id: String,
-        title: String,
-        description: String,
-        priority: Task.Priority,
-        categoryId: String,
-        status: Task.TaskStatus
-    ) {
+    fun updateTask(id: String, title: String, description: String, priority: Task.Priority, categoryId: String, status: Task.TaskStatus) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
-                val updatedTask = Task(
-                    id = id,
-                    title = title,
-                    description = description,
-                    priority = priority,
-                    categoryId = categoryId,
-                    status = status
-                )
+                val updatedTask = Task(id = id, title = title, description = description, priority = priority, categoryId = categoryId, status = status)
                 taskRepository.updateTask(updatedTask)
-                _message.value = "Tarea actualizada"
             } catch (e: Exception) {
-                _message.value = "Error al actualizar: ${e.message}"
-            } finally {
-                _isLoading.value = false
+                _message.value = "Error: ${e.message}"
             }
         }
     }
 
-    // Cambiar estado de tarea
     fun toggleTaskStatus(taskId: String, isCompleted: Boolean) {
         viewModelScope.launch {
             try {
-                val newStatus = if (isCompleted) {
-                    Task.TaskStatus.COMPLETED
-                } else {
-                    Task.TaskStatus.PENDING
-                }
+                val newStatus = if (isCompleted) Task.TaskStatus.COMPLETED else Task.TaskStatus.PENDING
                 taskRepository.toggleTaskStatus(taskId, newStatus)
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
@@ -139,17 +120,12 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Eliminar tarea
     fun deleteTask(taskId: String) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 taskRepository.deleteTask(taskId)
-                _message.value = "Tarea eliminada"
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
-            } finally {
-                _isLoading.value = false
             }
         }
     }

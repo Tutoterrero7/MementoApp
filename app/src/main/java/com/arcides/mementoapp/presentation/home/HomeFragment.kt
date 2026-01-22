@@ -49,13 +49,11 @@ class HomeFragment : Fragment() {
         setupUI()
         setupObservers()
 
-        // Mostrar email del usuario
         val userEmail = auth.currentUser?.email ?: "Usuario"
-        binding.welcomeText.text = "Bienvenido, $userEmail"
+        binding.welcomeText.text = "Hola, $userEmail"
     }
 
     private fun setupUI() {
-        // Configurar Toolbar con el menú
         binding.toolbar.inflateMenu(R.menu.home_menu)
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -72,7 +70,16 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Configurar RecyclerView
+        // Configurar Chips de Filtro
+        binding.filterChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            val filter = when (checkedId) {
+                R.id.chipPending -> HomeViewModel.TaskFilter.PENDING
+                R.id.chipCompleted -> HomeViewModel.TaskFilter.COMPLETED
+                else -> HomeViewModel.TaskFilter.ALL
+            }
+            viewModel.setFilter(filter)
+        }
+
         tasksAdapter = TasksAdapter(
             onTaskChecked = { taskId, isChecked ->
                 viewModel.toggleTaskStatus(taskId, isChecked)
@@ -90,12 +97,10 @@ class HomeFragment : Fragment() {
             adapter = tasksAdapter
         }
 
-        // Swipe to refresh
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.isRefreshing = false
         }
 
-        // Botón para añadir tarea
         binding.fabAddTask.setOnClickListener {
             showAddTaskDialog()
         }
@@ -105,9 +110,26 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.tasks.collectLatest { tasks ->
-                        tasksAdapter.submitList(tasks)
-                        binding.tasksRecyclerView.visibility = if (tasks.isEmpty()) View.GONE else View.VISIBLE
+                    viewModel.uiState.collectLatest { state ->
+                        when (state) {
+                            is HomeViewModel.HomeUiState.Loading -> {
+                                binding.progressBar.visibility = View.VISIBLE
+                            }
+                            is HomeViewModel.HomeUiState.Success -> {
+                                binding.progressBar.visibility = View.GONE
+                                tasksAdapter.submitList(state.tasks)
+                                
+                                if (state.tasks.isEmpty()) {
+                                    binding.tasksRecyclerView.visibility = View.GONE
+                                } else {
+                                    binding.tasksRecyclerView.visibility = View.VISIBLE
+                                }
+                            }
+                            is HomeViewModel.HomeUiState.Error -> {
+                                binding.progressBar.visibility = View.GONE
+                                Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG).show()
+                            }
+                        }
                     }
                 }
 
@@ -117,12 +139,6 @@ class HomeFragment : Fragment() {
                             Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show()
                             viewModel.clearMessage()
                         }
-                    }
-                }
-
-                launch {
-                    viewModel.isLoading.collectLatest { isLoading ->
-                        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
                     }
                 }
             }
@@ -141,7 +157,6 @@ class HomeFragment : Fragment() {
         var selectedCategoryId = ""
         var selectedPriority = Task.Priority.MEDIUM
         
-        // Configurar botón de categoría
         categoryButton.setOnClickListener {
             showCategorySelectionDialog(selectedCategoryId) { category ->
                 selectedCategoryId = category?.id ?: ""
@@ -149,7 +164,6 @@ class HomeFragment : Fragment() {
             }
         }
         
-        // Configurar prioridad
         priorityGroup.setOnCheckedChangeListener { _, checkedId ->
             selectedPriority = when (checkedId) {
                 R.id.priorityLow -> Task.Priority.LOW
@@ -189,21 +203,18 @@ class HomeFragment : Fragment() {
         val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
         val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
         
-        // Rellenar con datos actuales
         titleInput.setText(task.title)
         descriptionInput.setText(task.description)
         
         var selectedCategoryId = task.categoryId
         var selectedPriority = task.priority
         
-        // Seleccionar prioridad en RadioGroup
         when (task.priority) {
             Task.Priority.LOW -> priorityGroup.check(R.id.priorityLow)
             Task.Priority.HIGH -> priorityGroup.check(R.id.priorityHigh)
             Task.Priority.MEDIUM -> priorityGroup.check(R.id.priorityMedium)
         }
 
-        // Mostrar nombre de categoría actual si tiene
         if (selectedCategoryId.isNotBlank()) {
             val category = viewModel.categories.value.find { it.id == selectedCategoryId }
             categoryButton.text = category?.name ?: "Seleccionar categoría"
