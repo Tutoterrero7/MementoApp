@@ -3,20 +3,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center">
 
         <!-- Logo / Título -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="MementoApp"
-            android:textSize="32sp"
+            android:textSize="50sp"
             android:textStyle="bold"
             android:layout_marginTop="48dp"
             android:layout_marginBottom="48dp" />
@@ -26,7 +27,7 @@
             android:id="@+id/emailInputLayout"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="68dp"
             android:hint="Email"
             app:errorEnabled="true">
 
@@ -34,8 +35,8 @@
                 android:id="@+id/emailEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
-                android:imeOptions="actionNext" />
+                android:imeOptions="actionNext"
+                android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Contraseña -->
@@ -43,7 +44,7 @@
             android:id="@+id/passwordInputLayout"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="68dp"
             android:layout_marginTop="16dp"
             android:hint="Contraseña"
             app:endIconMode="password_toggle"
@@ -53,8 +54,8 @@
                 android:id="@+id/passwordEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:imeOptions="actionDone" />
+                android:imeOptions="actionDone"
+                android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Botón Login -->

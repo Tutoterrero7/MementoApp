@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentCategoriesBinding
@@ -67,7 +68,8 @@ class CategoriesFragment : Fragment() {
         )
 
         binding.categoriesRecyclerView.apply {
-            layoutManager = GridLayoutManager(requireContext(), 2)
+            // Cambiado de GridLayoutManager(..., 2) a LinearLayoutManager para ocupar todo el ancho
+            layoutManager = LinearLayoutManager(requireContext())
             adapter = categoriesAdapter
         }
 
