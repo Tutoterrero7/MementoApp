@@ -20,7 +20,6 @@ import com.arcides.mementoapp.domain.models.Task
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -32,7 +31,6 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var tasksAdapter: TasksAdapter
-    private val auth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,8 +47,8 @@ class HomeFragment : Fragment() {
         setupUI()
         setupObservers()
 
-        val userEmail = auth.currentUser?.email ?: "Usuario"
-        binding.welcomeText.text = "Hola, $userEmail"
+        // App local: No necesitamos currentUser de Firebase
+        binding.welcomeText.text = "Mis Tareas"
     }
 
     private fun setupUI() {
@@ -61,11 +59,7 @@ class HomeFragment : Fragment() {
                     findNavController().navigate(R.id.action_homeFragment_to_categoriesFragment)
                     true
                 }
-                R.id.action_logout -> {
-                    auth.signOut()
-                    findNavController().navigate(R.id.loginFragment)
-                    true
-                }
+                // Eliminamos la opción de logout ya que es local
                 else -> false
             }
         }

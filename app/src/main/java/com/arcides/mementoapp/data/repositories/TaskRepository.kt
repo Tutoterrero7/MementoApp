@@ -1,163 +1,68 @@
 package com.arcides.mementoapp.data.repositories
 
+import com.arcides.mementoapp.data.local.TaskDao
+import com.arcides.mementoapp.data.local.CategoryDao
 import com.arcides.mementoapp.domain.models.Task
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
-import java.util.Date
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class TaskRepository @Inject constructor(
-    private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth,
-    private val categoryRepository: CategoryRepository
+    private val taskDao: TaskDao,
+    private val categoryDao: CategoryDao
 ) {
     
-    // Obtener referencia a la colección del usuario actual
-    private fun getTasksCollection() = firestore
-        .collection("users")
-        .document(auth.currentUser?.uid ?: throw Exception("Usuario no autenticado"))
-        .collection("tasks")
-    
-    // 1. Obtener tareas en tiempo real (Flow)
-    fun getTasksStream(): Flow<List<Task>> = callbackFlow {
-        val currentUser = auth.currentUser
-        
-        if (currentUser == null) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
-        
-        val subscription = getTasksCollection()
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val tasks = snapshot?.documents?.mapNotNull { document ->
-                    try {
-                        val data = document.data ?: return@mapNotNull null
-                        Task(
-                            id = document.id,
-                            title = data["title"] as? String ?: "",
-                            description = data["description"] as? String ?: "",
-                            priority = Task.Priority.valueOf(data["priority"] as? String ?: "MEDIUM"),
-                            status = Task.TaskStatus.valueOf(data["status"] as? String ?: "PENDING"),
-                            categoryId = data["categoryId"] as? String ?: "",
-                            userId = data["userId"] as? String ?: "",
-                            createdAt = (data["createdAt"] as? com.google.firebase.Timestamp)?.toDate() ?: Date()
-                        )
-                    } catch (e: Exception) {
-                        null
-                    }
-                } ?: emptyList()
-                
-                trySend(tasks)
-            }
-        
-        awaitClose { subscription.remove() }
-    }
+    // 1. Obtener tareas en tiempo real
+    fun getTasksStream(): Flow<List<Task>> = taskDao.getTasksStream()
     
     // 2. Crear nueva tarea
     suspend fun createTask(task: Task): String {
-        val document = getTasksCollection().document()
-        val taskWithId = task.copy(id = document.id)
-        
-        val currentUserId = auth.currentUser?.uid ?: ""
-        
-        // Convertir a mapa para Firestore
-        val taskMap = hashMapOf<String, Any>(
-            "id" to taskWithId.id,
-            "title" to taskWithId.title,
-            "description" to taskWithId.description,
-            "priority" to taskWithId.priority.name,
-            "status" to taskWithId.status.name,
-            "categoryId" to taskWithId.categoryId,
-            "userId" to currentUserId,
-            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
-        )
-        
-        document.set(taskMap).await()
+        taskDao.insertTask(task)
         
         // Incrementar contador en categoría si existe
         if (task.categoryId.isNotBlank()) {
-            categoryRepository.incrementTaskCount(task.categoryId)
+            categoryDao.updateTaskCount(task.categoryId, 1)
         }
         
-        return document.id
+        return task.id
     }
 
     // 2.5 Actualizar tarea existente
     suspend fun updateTask(task: Task) {
         // Obtener la tarea antigua para ver si cambió la categoría
-        val oldTaskDoc = getTasksCollection().document(task.id).get().await()
-        val oldCategoryId = oldTaskDoc.getString("categoryId") ?: ""
+        val oldCategoryId = taskDao.getCategoryIdForTask(task.id) ?: ""
 
-        val taskMap = hashMapOf<String, Any>(
-            "title" to task.title,
-            "description" to task.description,
-            "priority" to task.priority.name,
-            "status" to task.status.name,
-            "categoryId" to task.categoryId
-        )
-
-        getTasksCollection().document(task.id).update(taskMap).await()
+        taskDao.updateTask(task)
 
         // Si la categoría cambió, actualizar contadores
         if (oldCategoryId != task.categoryId) {
             if (oldCategoryId.isNotBlank()) {
-                categoryRepository.decrementTaskCount(oldCategoryId)
+                categoryDao.updateTaskCount(oldCategoryId, -1)
             }
             if (task.categoryId.isNotBlank()) {
-                categoryRepository.incrementTaskCount(task.categoryId)
+                categoryDao.updateTaskCount(task.categoryId, 1)
             }
         }
     }
     
     // 3. Cambiar estado de tarea
     suspend fun toggleTaskStatus(taskId: String, newStatus: Task.TaskStatus) {
-        getTasksCollection()
-            .document(taskId)
-            .update("status", newStatus.name)
-            .await()
+        val task = taskDao.getTaskById(taskId)
+        task?.let {
+            taskDao.updateTask(it.copy(status = newStatus))
+        }
     }
     
     // 4. Eliminar tarea
     suspend fun deleteTask(taskId: String) {
-        // Primero obtener la tarea para saber su categoría
-        val taskDoc = getTasksCollection().document(taskId).get().await()
-        val categoryId = taskDoc.get("categoryId") as? String ?: ""
+        val categoryId = taskDao.getCategoryIdForTask(taskId) ?: ""
         
         // Eliminar la tarea
-        getTasksCollection().document(taskId).delete().await()
+        taskDao.deleteById(taskId)
         
         // Decrementar contador en categoría si existe
         if (categoryId.isNotBlank()) {
-            categoryRepository.decrementTaskCount(categoryId)
-        }
-    }
-    
-    // 5. Actualizar categoría de una tarea
-    suspend fun updateTaskCategory(taskId: String, newCategoryId: String, oldCategoryId: String) {
-        // Actualizar campo en la tarea
-        getTasksCollection()
-            .document(taskId)
-            .update("categoryId", newCategoryId)
-            .await()
-        
-        // Ajustar contadores
-        if (oldCategoryId.isNotBlank()) {
-            categoryRepository.decrementTaskCount(oldCategoryId)
-        }
-        if (newCategoryId.isNotBlank()) {
-            categoryRepository.incrementTaskCount(newCategoryId)
+            categoryDao.updateTaskCount(categoryId, -1)
         }
     }
 }

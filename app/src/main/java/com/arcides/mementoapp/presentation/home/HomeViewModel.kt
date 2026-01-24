@@ -48,7 +48,10 @@ class HomeViewModel @Inject constructor(
         _currentFilter
     ) { tasks, categories, filter ->
         val enrichedTasks = tasks.map { task ->
-            task.copy(category = categories.find { it.id == task.categoryId })
+            // Como 'category' ya no está en el constructor (para Room), lo asignamos manualmente
+            task.copy().apply {
+                category = categories.find { it.id == task.categoryId }
+            }
         }
         
         val filteredTasks = when (filter) {

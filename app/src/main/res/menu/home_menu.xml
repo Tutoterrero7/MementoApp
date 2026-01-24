@@ -7,9 +7,4 @@
         android:title="Categorías"
         android:icon="@android:drawable/ic_menu_agenda"
         app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/action_logout"
-        android:title="Cerrar sesión"
-        app:showAsAction="never" />
 </menu>

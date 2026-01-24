@@ -1,11 +1,16 @@
 package com.arcides.mementoapp.domain.models
 
 import android.os.Parcelable
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
+import java.util.UUID
 
 @Parcelize
+@Entity(tableName = "categories")
 data class Category(
-    val id: String = "",
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val name: String = "",
     val color: String = "#2196F3", // Color en hexadecimal
     val userId: String = "",

@@ -18,17 +18,17 @@ class SplashFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflar el layout
         return inflater.inflate(R.layout.fragment_splash, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Redirigir después de 2 segundos
+        // Navegar al Login después de un breve delay
         Handler(Looper.getMainLooper()).postDelayed({
-            // Aquí decidiremos: si usuario está logueado → Home, sino → Login
-            findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
-        }, 2000)
+            if (isAdded && findNavController().currentDestination?.id == R.id.splashFragment) {
+                findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
+            }
+        }, 1500)
     }
 }

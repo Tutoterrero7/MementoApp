@@ -40,29 +40,23 @@ class TasksAdapter(
             binding.taskTitle.text = task.title
             binding.taskDescription.text = task.description
             
-            // Estilo según estado (completado o no)
-            if (isCompleted) {
-                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                binding.root.alpha = 0.6f
-            } else {
-                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                binding.root.alpha = 1.0f
-            }
+            // Estilo visual según estado
+            updateTaskStyle(isCompleted)
 
             // Prioridad
-            val priorityText = when (task.priority) {
+            binding.taskPriority.text = when (task.priority) {
                 Task.Priority.HIGH -> "ALTA"
                 Task.Priority.MEDIUM -> "MEDIA"
                 Task.Priority.LOW -> "BAJA"
             }
-            binding.taskPriority.text = priorityText
             
-            // Categoría Badge (Mejora: Color y Nombre)
-            if (task.category != null) {
+            // Categoría Badge
+            val category = task.category
+            if (category != null) {
                 binding.categoryBadge.visibility = View.VISIBLE
-                binding.categoryBadge.text = task.category.name.uppercase()
+                binding.categoryBadge.text = category.name.uppercase()
                 try {
-                    binding.categoryBadge.background.setTint(Color.parseColor(task.category.color))
+                    binding.categoryBadge.background.setTint(Color.parseColor(category.color))
                 } catch (e: Exception) {
                     binding.categoryBadge.background.setTint(Color.GRAY)
                 }
@@ -70,20 +64,25 @@ class TasksAdapter(
                 binding.categoryBadge.visibility = View.GONE
             }
 
-            // Estado (checkbox)
+            // Estado (checkbox) - Evitar disparar el listener al hacer el binding
+            binding.taskCheckbox.setOnCheckedChangeListener(null)
             binding.taskCheckbox.isChecked = isCompleted
-
-            // Listeners
             binding.taskCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 onTaskChecked(task.id, isChecked)
             }
 
-            binding.editButton.setOnClickListener {
-                onTaskEdit(task)
-            }
+            // Listeners de botones
+            binding.editButton.setOnClickListener { onTaskEdit(task) }
+            binding.deleteButton.setOnClickListener { onTaskDeleted(task.id) }
+        }
 
-            binding.deleteButton.setOnClickListener {
-                onTaskDeleted(task.id)
+        private fun updateTaskStyle(isCompleted: Boolean) {
+            if (isCompleted) {
+                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.root.alpha = 0.6f
+            } else {
+                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.root.alpha = 1.0f
             }
         }
     }
@@ -94,7 +93,9 @@ class TasksAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
-            return oldItem == newItem
+            // Se debe comparar manualmente 'category' porque está marcada con @Ignore 
+            // y no forma parte del equals() automático de la data class Task.
+            return oldItem == newItem && oldItem.category == newItem.category
         }
     }
 }

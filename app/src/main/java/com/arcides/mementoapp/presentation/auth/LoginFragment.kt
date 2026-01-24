@@ -48,26 +48,18 @@ class LoginFragment : Fragment() {
 
     private fun setupViews() {
         binding.loginButton.setOnClickListener {
-            // Obtener valores REALES de los campos
-            viewModel.email = binding.emailEditText.text.toString().trim()
-            viewModel.password = binding.passwordEditText.text.toString()
-            
             if (viewModel.isFormValid) {
                 viewModel.login()
             } else {
-                Snackbar.make(binding.root, "Por favor, completa todos los campos", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "Por favor, revisa los datos ingresados", Snackbar.LENGTH_SHORT).show()
             }
         }
 
         binding.registerButton.setOnClickListener {
-            // Asegurar que el ViewModel tiene los datos actuales antes de registrar
-            viewModel.email = binding.emailEditText.text.toString().trim()
-            viewModel.password = binding.passwordEditText.text.toString()
-            
             if (viewModel.isFormValid) {
                 viewModel.register()
             } else {
-                Snackbar.make(binding.root, "Datos de registro inválidos", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "Por favor, revisa los datos ingresados", Snackbar.LENGTH_SHORT).show()
             }
         }
 
@@ -81,7 +73,6 @@ class LoginFragment : Fragment() {
         val input = EditText(requireContext()).apply {
             hint = "Email"
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-            // Añadir márgenes para que no pegue a los bordes del diálogo
             val lp = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -100,12 +91,7 @@ class LoginFragment : Fragment() {
             .setView(container)
             .setPositiveButton("Enviar") { _, _ ->
                 val email = input.text.toString().trim()
-                
-                if (email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    viewModel.resetPassword(email)
-                } else {
-                    Snackbar.make(binding.root, "Email inválido", Snackbar.LENGTH_SHORT).show()
-                }
+                viewModel.resetPassword(email)
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -138,15 +124,19 @@ class LoginFragment : Fragment() {
                         is AuthViewModel.AuthState.Success -> {
                             showLoading(false)
                             Snackbar.make(binding.root, state.message, Snackbar.LENGTH_SHORT).show()
-                            navigateToHome()
+                            if (state.message.contains("Login") || state.message.contains("exit")) {
+                                navigateToHome()
+                                viewModel.resetState()
+                            }
                         }
 
                         is AuthViewModel.AuthState.Error -> {
                             showLoading(false)
-                            Snackbar.make(binding.root, "Error: ${state.message}", Snackbar.LENGTH_LONG).show()
+                            Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG).show()
+                            viewModel.resetState()
                         }
 
-                        else -> {
+                        is AuthViewModel.AuthState.Idle -> {
                             showLoading(false)
                         }
                     }
@@ -159,6 +149,8 @@ class LoginFragment : Fragment() {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         binding.loginButton.isEnabled = !loading && viewModel.isFormValid
         binding.registerButton.isEnabled = !loading
+        binding.emailEditText.isEnabled = !loading
+        binding.passwordEditText.isEnabled = !loading
     }
 
     private fun navigateToHome() {

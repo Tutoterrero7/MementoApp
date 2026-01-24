@@ -1,9 +1,10 @@
 package com.arcides.mementoapp.presentation.auth
 
 import android.util.Log
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arcides.mementoapp.data.repositories.AuthRepository
+import com.arcides.mementoapp.domain.repositories.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +18,8 @@ class AuthViewModel @Inject constructor(
 
     // Estados de la UI
     sealed class AuthState {
-        object Idle : AuthState()
-        object Loading : AuthState()
+        data object Idle : AuthState()
+        data object Loading : AuthState()
         data class Success(val message: String) : AuthState()
         data class Error(val message: String) : AuthState()
     }
@@ -30,32 +31,30 @@ class AuthViewModel @Inject constructor(
     var email: String = ""
     var password: String = ""
 
-    // Validar si el formulario está completo
+    // Validar si el formulario está completo y el email es válido
     val isFormValid: Boolean
-        get() = email.isNotBlank() && password.length >= 6
+        get() = email.isNotBlank() && 
+                Patterns.EMAIL_ADDRESS.matcher(email).matches() && 
+                password.length >= 6
 
     // Función de login
     fun login() {
-        Log.d("AUTH_DEBUG", "Intentando login con: $email")
-        
         if (!isFormValid) {
-            _authState.value = AuthState.Error("Email y contraseña requeridos (mínimo 6 caracteres)")
-            Log.d("AUTH_DEBUG", "Formulario inválido")
+            val errorMsg = if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                "Formato de email inválido"
+            } else {
+                "La contraseña debe tener al menos 6 caracteres"
+            }
+            _authState.value = AuthState.Error(errorMsg)
             return
         }
 
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            Log.d("AUTH_DEBUG", "Llamando a authRepository.login()")
-            
             val result = authRepository.login(email, password)
-            Log.d("AUTH_DEBUG", "Resultado: ${result.isSuccess}, Error: ${result.exceptionOrNull()?.message}")
             
             _authState.value = when {
-                result.isSuccess -> {
-                    Log.d("AUTH_DEBUG", "Login exitoso, navegando a Home")
-                    AuthState.Success("Login exitoso")
-                }
+                result.isSuccess -> AuthState.Success("Login exitoso")
                 else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error en login")
             }
         }
@@ -64,7 +63,12 @@ class AuthViewModel @Inject constructor(
     // Función de registro
     fun register() {
         if (!isFormValid) {
-            _authState.value = AuthState.Error("Email y contraseña requeridos")
+            val errorMsg = if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                "Formato de email inválido"
+            } else {
+                "La contraseña debe tener al menos 6 caracteres"
+            }
+            _authState.value = AuthState.Error(errorMsg)
             return
         }
 
@@ -74,20 +78,25 @@ class AuthViewModel @Inject constructor(
 
             _authState.value = when {
                 result.isSuccess -> AuthState.Success("Cuenta creada exitosamente")
-                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error desconocido")
+                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error al registrar")
             }
         }
     }
 
     // Función para resetear contraseña
     fun resetPassword(email: String) {
+        if (email.isBlank() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _authState.value = AuthState.Error("Email inválido")
+            return
+        }
+
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             val result = authRepository.resetPassword(email)
             
             _authState.value = when {
                 result.isSuccess -> AuthState.Success("Email de recuperación enviado")
-                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error")
+                else -> AuthState.Error(result.exceptionOrNull()?.message ?: "Error al enviar email")
             }
         }
     }
