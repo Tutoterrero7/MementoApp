@@ -5,14 +5,16 @@ import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.ItemTaskBinding
 import com.arcides.mementoapp.domain.models.Task
 
 class TasksAdapter(
-    private val onTaskChecked: (String, Boolean) -> Unit,
+    private val onStatusChange: (String, Task.TaskStatus) -> Unit,
     private val onTaskEdit: (Task) -> Unit,
     private val onTaskDeleted: (String) -> Unit
 ) : ListAdapter<Task, TasksAdapter.TaskViewHolder>(TaskDiffCallback()) {
@@ -35,13 +37,11 @@ class TasksAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(task: Task) {
-            val isCompleted = task.status == Task.TaskStatus.COMPLETED
-            
             binding.taskTitle.text = task.title
             binding.taskDescription.text = task.description
             
-            // Estilo visual según estado
-            updateTaskStyle(isCompleted)
+            // Actualizar estilo visual y botones según estado
+            updateStatusUI(task)
 
             // Prioridad
             binding.taskPriority.text = when (task.priority) {
@@ -64,11 +64,9 @@ class TasksAdapter(
                 binding.categoryBadge.visibility = View.GONE
             }
 
-            // Estado (checkbox) - Evitar disparar el listener al hacer el binding
-            binding.taskCheckbox.setOnCheckedChangeListener(null)
-            binding.taskCheckbox.isChecked = isCompleted
-            binding.taskCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                onTaskChecked(task.id, isChecked)
+            // Click en el botón de estado para abrir menú de cambio de estado
+            binding.statusButton.setOnClickListener { view ->
+                showStatusPopupMenu(view, task)
             }
 
             // Listeners de botones
@@ -76,14 +74,62 @@ class TasksAdapter(
             binding.deleteButton.setOnClickListener { onTaskDeleted(task.id) }
         }
 
-        private fun updateTaskStyle(isCompleted: Boolean) {
-            if (isCompleted) {
-                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                binding.root.alpha = 0.6f
-            } else {
-                binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                binding.root.alpha = 1.0f
+        private fun updateStatusUI(task: Task) {
+            when (task.status) {
+                Task.TaskStatus.PENDING -> {
+                    binding.statusButton.setImageResource(R.drawable.circle_shape)
+                    binding.statusButton.colorFilter = null
+                    binding.statusLabel.text = "Pendiente"
+                    binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    binding.root.alpha = 1.0f
+                }
+                Task.TaskStatus.IN_PROGRESS -> {
+                    binding.statusButton.setImageResource(android.R.drawable.presence_away)
+                    binding.statusButton.setColorFilter(Color.parseColor("#FFC107")) // Ámbar/Amarillo
+                    binding.statusLabel.text = "En Progreso"
+                    binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    binding.root.alpha = 1.0f
+                }
+                Task.TaskStatus.COMPLETED -> {
+                    binding.statusButton.setImageResource(android.R.drawable.presence_online)
+                    // Usar Color.parseColor directamente con manejo de errores
+                    val greenColor = try {
+                        Color.parseColor("#4CAF50")
+                    } catch (e: Exception) {
+                        Color.GREEN // Fallback color
+                    }
+                    binding.statusButton.setColorFilter(greenColor)
+                    binding.statusLabel.text = "Completada"
+                    binding.taskTitle.paintFlags = binding.taskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    binding.root.alpha = 0.6f
+                }
             }
+        }
+        
+        // Función de ayuda para parsear colores de forma segura ya que Color.parseFilter no existe
+        private fun android.graphics.Color.parseFilter(colorString: String): Int? {
+            return try { android.graphics.Color.parseColor(colorString) } catch (e: Exception) { null }
+        }
+
+        private fun showStatusPopupMenu(view: View, task: Task) {
+            val popup = PopupMenu(view.context, view)
+            popup.menu.add(0, 1, 0, "Pendiente")
+            popup.menu.add(0, 2, 1, "En Progreso")
+            popup.menu.add(0, 3, 2, "Completada")
+            
+            popup.setOnMenuItemClickListener { item ->
+                val newStatus = when (item.itemId) {
+                    1 -> Task.TaskStatus.PENDING
+                    2 -> Task.TaskStatus.IN_PROGRESS
+                    3 -> Task.TaskStatus.COMPLETED
+                    else -> task.status
+                }
+                if (newStatus != task.status) {
+                    onStatusChange(task.id, newStatus)
+                }
+                true
+            }
+            popup.show()
         }
     }
 
@@ -93,8 +139,6 @@ class TasksAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
-            // Se debe comparar manualmente 'category' porque está marcada con @Ignore 
-            // y no forma parte del equals() automático de la data class Task.
             return oldItem == newItem && oldItem.category == newItem.category
         }
     }

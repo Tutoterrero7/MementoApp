@@ -21,11 +21,14 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <CheckBox
-                android:id="@+id/taskCheckbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:buttonTint="?attr/colorPrimary" />
+            <!-- Botón de Estado Cíclico/Menú -->
+            <ImageButton
+                android:id="@+id/statusButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/presence_invisible"
+                app:tint="?attr/colorPrimary" />
 
             <TextView
                 android:id="@+id/taskTitle"
@@ -59,7 +62,7 @@
             android:id="@+id/taskDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="40dp"
             android:layout_marginTop="2dp"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary" />
@@ -67,7 +70,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="40dp"
             android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
@@ -97,6 +100,17 @@
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
+
+            <!-- Texto de Estado -->
+            <TextView
+                android:id="@+id/statusLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textSize="11sp"
+                android:textStyle="italic"
+                android:textColor="?android:attr/textColorSecondary"
+                android:text="Pendiente" />
 
         </LinearLayout>
 

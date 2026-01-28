@@ -33,7 +33,6 @@ class HomeFragment : Fragment() {
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var tasksAdapter: TasksAdapter
     
-    // Almacena el ID de la categoría por la que se está filtrando actualmente
     private var currentFilterCategoryId: String? = null
 
     override fun onCreateView(
@@ -55,7 +54,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // 1. Botón de arriba a la derecha (Toolbar): Gestionar categorías
         binding.toolbar.inflateMenu(R.menu.home_menu)
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -67,12 +65,10 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // 2. Botón de la derecha del todo (en filtros): Filtrar por categoría
         binding.btnFilterCategory.setOnClickListener {
             showFilterCategorySelectionDialog()
         }
 
-        // Filtros de Estado y Prioridad
         binding.statusChipGroup.setOnCheckedChangeListener { _, checkedId ->
             val status = when (checkedId) {
                 R.id.chipPending -> Task.TaskStatus.PENDING
@@ -105,8 +101,9 @@ class HomeFragment : Fragment() {
         })
 
         tasksAdapter = TasksAdapter(
-            onTaskChecked = { taskId, isChecked ->
-                viewModel.toggleTaskStatus(taskId, isChecked)
+            onStatusChange = { taskId, newStatus ->
+                // Usamos la función del ViewModel para actualizar el estado específico
+                viewModel.updateTaskStatus(taskId, newStatus)
             },
             onTaskEdit = { task ->
                 showEditTaskDialog(task)
@@ -169,7 +166,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // Diálogo para seleccionar categoría de FILTRADO (Botón derecho filtros)
     private fun showFilterCategorySelectionDialog() {
         val categories = viewModel.categories.value
         val categoryNames = mutableListOf("Todas las categorías")
@@ -304,7 +300,6 @@ class HomeFragment : Fragment() {
             .show()
     }
 
-    // Diálogo para seleccionar categoría al CREAR/EDITAR una tarea
     private fun showCategorySelectionDialog(
         currentCategoryId: String,
         onCategorySelected: (Category?) -> Unit

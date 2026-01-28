@@ -18,17 +18,14 @@ class HomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    // Estados para filtros (RF11, RF13)
     private val _searchQuery = MutableStateFlow<String?>(null)
     private val _statusFilter = MutableStateFlow<Task.TaskStatus?>(null)
     private val _priorityFilter = MutableStateFlow<Task.Priority?>(null)
     private val _categoryFilter = MutableStateFlow<String?>(null)
 
-    // Flujo de categorías para la UI
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    // UI State reactivo que combina filtros y búsqueda (RF10, RF11, RF12, RF13)
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
         _searchQuery, _statusFilter, _priorityFilter, _categoryFilter
@@ -61,7 +58,6 @@ class HomeViewModel @Inject constructor(
         createDefaultCategories()
     }
 
-    // Funciones para actualizar filtros (RF11, RF13)
     fun setSearchQuery(query: String?) {
         _searchQuery.value = if (query.isNullOrBlank()) null else query
     }
@@ -86,7 +82,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Operaciones CRUD (RF6, RF7, RF8, RF9)
     fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String) {
         viewModelScope.launch {
             taskRepository.createTask(Task(title = title, description = description, priority = priority, categoryId = categoryId))
@@ -99,9 +94,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun toggleTaskStatus(taskId: String, isCompleted: Boolean) {
+    // Nueva función para actualizar solo el estado de la tarea (RF9 con 3 estados)
+    fun updateTaskStatus(taskId: String, newStatus: Task.TaskStatus) {
         viewModelScope.launch {
-            val newStatus = if (isCompleted) Task.TaskStatus.COMPLETED else Task.TaskStatus.PENDING
             taskRepository.toggleTaskStatus(taskId, newStatus)
         }
     }
