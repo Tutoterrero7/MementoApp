@@ -7,11 +7,8 @@ import com.arcides.mementoapp.data.repositories.TaskRepository
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,46 +18,36 @@ class HomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    enum class TaskFilter { ALL, PENDING, COMPLETED }
+    // Estados para filtros (RF11, RF13)
+    private val _searchQuery = MutableStateFlow<String?>(null)
+    private val _statusFilter = MutableStateFlow<Task.TaskStatus?>(null)
+    private val _priorityFilter = MutableStateFlow<Task.Priority?>(null)
+    private val _categoryFilter = MutableStateFlow<String?>(null)
 
-    sealed class HomeUiState {
-        object Loading : HomeUiState()
-        data class Success(val tasks: List<Task>) : HomeUiState()
-        data class Error(val message: String) : HomeUiState()
-    }
-
-    // Filtro actual
-    private val _currentFilter = MutableStateFlow(TaskFilter.ALL)
-    val currentFilter: StateFlow<TaskFilter> = _currentFilter
-
-    // Flujo de categorías
+    // Flujo de categorías para la UI
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList()
-        )
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    // Estado centralizado con filtrado dinámico
+    // UI State reactivo que combina filtros y búsqueda (RF10, RF11, RF12, RF13)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
-        taskRepository.getTasksStream(),
-        categories,
-        _currentFilter
-    ) { tasks, categories, filter ->
-        val enrichedTasks = tasks.map { task ->
-            // Como 'category' ya no está en el constructor (para Room), lo asignamos manualmente
-            task.copy().apply {
-                category = categories.find { it.id == task.categoryId }
+        _searchQuery, _statusFilter, _priorityFilter, _categoryFilter
+    ) { query, status, priority, categoryId ->
+        Filters(query, status, priority, categoryId)
+    }.flatMapLatest { filters ->
+        taskRepository.getFilteredTasksStream(
+            query = filters.query,
+            status = filters.status,
+            priority = filters.priority,
+            categoryId = filters.categoryId
+        ).combine(categories) { tasks, categories ->
+            val enrichedTasks = tasks.map { task ->
+                task.copy().apply {
+                    category = categories.find { it.id == task.categoryId }
+                }
             }
+            HomeUiState.Success(enrichedTasks)
         }
-        
-        val filteredTasks = when (filter) {
-            TaskFilter.ALL -> enrichedTasks
-            TaskFilter.PENDING -> enrichedTasks.filter { it.status != Task.TaskStatus.COMPLETED }
-            TaskFilter.COMPLETED -> enrichedTasks.filter { it.status == Task.TaskStatus.COMPLETED }
-        }
-        
-        HomeUiState.Success(filteredTasks)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -74,66 +61,69 @@ class HomeViewModel @Inject constructor(
         createDefaultCategories()
     }
 
-    fun setFilter(filter: TaskFilter) {
-        _currentFilter.value = filter
+    // Funciones para actualizar filtros (RF11, RF13)
+    fun setSearchQuery(query: String?) {
+        _searchQuery.value = if (query.isNullOrBlank()) null else query
+    }
+
+    fun setStatusFilter(status: Task.TaskStatus?) {
+        _statusFilter.value = status
+    }
+
+    fun setPriorityFilter(priority: Task.Priority?) {
+        _priorityFilter.value = priority
+    }
+
+    fun setCategoryFilter(categoryId: String?) {
+        _categoryFilter.value = categoryId
     }
 
     private fun createDefaultCategories() {
         viewModelScope.launch {
             try {
                 categoryRepository.createDefaultCategoriesIfNeeded()
-            } catch (e: Exception) { /* Silencioso */ }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
-    fun createTask(title: String, description: String = "", priority: Task.Priority = Task.Priority.MEDIUM, categoryId: String = "") {
-        if (title.isBlank()) {
-            _message.value = "El título es requerido"
-            return
-        }
+    // Operaciones CRUD (RF6, RF7, RF8, RF9)
+    fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String) {
         viewModelScope.launch {
-            try {
-                val newTask = Task(title = title, description = description, priority = priority, categoryId = categoryId)
-                taskRepository.createTask(newTask)
-            } catch (e: Exception) {
-                _message.value = "Error: ${e.message}"
-            }
+            taskRepository.createTask(Task(title = title, description = description, priority = priority, categoryId = categoryId))
         }
     }
 
-    fun updateTask(id: String, title: String, description: String, priority: Task.Priority, categoryId: String, status: Task.TaskStatus) {
+    fun updateTask(task: Task) {
         viewModelScope.launch {
-            try {
-                val updatedTask = Task(id = id, title = title, description = description, priority = priority, categoryId = categoryId, status = status)
-                taskRepository.updateTask(updatedTask)
-            } catch (e: Exception) {
-                _message.value = "Error: ${e.message}"
-            }
+            taskRepository.updateTask(task)
         }
     }
 
     fun toggleTaskStatus(taskId: String, isCompleted: Boolean) {
         viewModelScope.launch {
-            try {
-                val newStatus = if (isCompleted) Task.TaskStatus.COMPLETED else Task.TaskStatus.PENDING
-                taskRepository.toggleTaskStatus(taskId, newStatus)
-            } catch (e: Exception) {
-                _message.value = "Error: ${e.message}"
-            }
+            val newStatus = if (isCompleted) Task.TaskStatus.COMPLETED else Task.TaskStatus.PENDING
+            taskRepository.toggleTaskStatus(taskId, newStatus)
         }
     }
 
     fun deleteTask(taskId: String) {
         viewModelScope.launch {
-            try {
-                taskRepository.deleteTask(taskId)
-            } catch (e: Exception) {
-                _message.value = "Error: ${e.message}"
-            }
+            taskRepository.deleteTask(taskId)
         }
     }
 
-    fun clearMessage() {
-        _message.value = null
+    fun clearMessage() { _message.value = null }
+
+    data class Filters(
+        val query: String?,
+        val status: Task.TaskStatus?,
+        val priority: Task.Priority?,
+        val categoryId: String?
+    )
+
+    sealed class HomeUiState {
+        object Loading : HomeUiState()
+        data class Success(val tasks: List<Task>) : HomeUiState()
+        data class Error(val message: String) : HomeUiState()
     }
 }

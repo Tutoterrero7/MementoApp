@@ -4,7 +4,6 @@ import com.arcides.mementoapp.data.local.TaskDao
 import com.arcides.mementoapp.data.local.CategoryDao
 import com.arcides.mementoapp.domain.models.Task
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class TaskRepository @Inject constructor(
@@ -14,8 +13,16 @@ class TaskRepository @Inject constructor(
     
     // 1. Obtener tareas en tiempo real
     fun getTasksStream(): Flow<List<Task>> = taskDao.getTasksStream()
+
+    // 1.1 Obtener tareas filtradas (RF11, RF13)
+    fun getFilteredTasksStream(
+        query: String? = null,
+        status: Task.TaskStatus? = null,
+        priority: Task.Priority? = null,
+        categoryId: String? = null
+    ): Flow<List<Task>> = taskDao.getFilteredTasksStream(query, status, priority, categoryId)
     
-    // 2. Crear nueva tarea
+    // 2. Crear nueva tarea (RF6)
     suspend fun createTask(task: Task): String {
         taskDao.insertTask(task)
         
@@ -27,7 +34,7 @@ class TaskRepository @Inject constructor(
         return task.id
     }
 
-    // 2.5 Actualizar tarea existente
+    // 2.5 Actualizar tarea existente (RF7, RF9, RF16)
     suspend fun updateTask(task: Task) {
         // Obtener la tarea antigua para ver si cambió la categoría
         val oldCategoryId = taskDao.getCategoryIdForTask(task.id) ?: ""
@@ -45,7 +52,7 @@ class TaskRepository @Inject constructor(
         }
     }
     
-    // 3. Cambiar estado de tarea
+    // 3. Cambiar estado de tarea (RF9)
     suspend fun toggleTaskStatus(taskId: String, newStatus: Task.TaskStatus) {
         val task = taskDao.getTaskById(taskId)
         task?.let {
@@ -53,7 +60,7 @@ class TaskRepository @Inject constructor(
         }
     }
     
-    // 4. Eliminar tarea
+    // 4. Eliminar tarea (RF8)
     suspend fun deleteTask(taskId: String) {
         val categoryId = taskDao.getCategoryIdForTask(taskId) ?: ""
         
@@ -65,4 +72,6 @@ class TaskRepository @Inject constructor(
             categoryDao.updateTaskCount(categoryId, -1)
         }
     }
+
+    suspend fun getTaskById(id: String): Task? = taskDao.getTaskById(id)
 }

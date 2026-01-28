@@ -9,6 +9,21 @@ interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
     fun getTasksStream(): Flow<List<Task>>
 
+    @Query("""
+        SELECT * FROM tasks 
+        WHERE (:query IS NULL OR title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%')
+        AND (:status IS NULL OR status = :status)
+        AND (:priority IS NULL OR priority = :priority)
+        AND (:categoryId IS NULL OR categoryId = :categoryId)
+        ORDER BY createdAt DESC
+    """)
+    fun getFilteredTasksStream(
+        query: String? = null,
+        status: Task.TaskStatus? = null,
+        priority: Task.Priority? = null,
+        categoryId: String? = null
+    ): Flow<List<Task>>
+
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskById(id: String): Task?
 

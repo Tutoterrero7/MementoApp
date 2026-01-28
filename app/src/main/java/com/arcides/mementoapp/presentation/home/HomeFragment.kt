@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.RadioGroup
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -31,6 +32,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var tasksAdapter: TasksAdapter
+    
+    // Almacena el ID de la categoría por la que se está filtrando actualmente
+    private var currentFilterCategoryId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,11 +51,11 @@ class HomeFragment : Fragment() {
         setupUI()
         setupObservers()
 
-        // App local: No necesitamos currentUser de Firebase
-        binding.welcomeText.text = "Mis Tareas"
+        binding.toolbar.title = "Mis Tareas"
     }
 
     private fun setupUI() {
+        // 1. Botón de arriba a la derecha (Toolbar): Gestionar categorías
         binding.toolbar.inflateMenu(R.menu.home_menu)
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -59,20 +63,46 @@ class HomeFragment : Fragment() {
                     findNavController().navigate(R.id.action_homeFragment_to_categoriesFragment)
                     true
                 }
-                // Eliminamos la opción de logout ya que es local
                 else -> false
             }
         }
 
-        // Configurar Chips de Filtro
-        binding.filterChipGroup.setOnCheckedChangeListener { _, checkedId ->
-            val filter = when (checkedId) {
-                R.id.chipPending -> HomeViewModel.TaskFilter.PENDING
-                R.id.chipCompleted -> HomeViewModel.TaskFilter.COMPLETED
-                else -> HomeViewModel.TaskFilter.ALL
-            }
-            viewModel.setFilter(filter)
+        // 2. Botón de la derecha del todo (en filtros): Filtrar por categoría
+        binding.btnFilterCategory.setOnClickListener {
+            showFilterCategorySelectionDialog()
         }
+
+        // Filtros de Estado y Prioridad
+        binding.statusChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            val status = when (checkedId) {
+                R.id.chipPending -> Task.TaskStatus.PENDING
+                R.id.chipCompleted -> Task.TaskStatus.COMPLETED
+                else -> null
+            }
+            viewModel.setStatusFilter(status)
+        }
+
+        binding.priorityChipGroup.setOnCheckedChangeListener { _, checkedId ->
+            val priority = when (checkedId) {
+                R.id.chipHigh -> Task.Priority.HIGH
+                R.id.chipMedium -> Task.Priority.MEDIUM
+                R.id.chipLow -> Task.Priority.LOW
+                else -> null
+            }
+            viewModel.setPriorityFilter(priority)
+        }
+
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                viewModel.setSearchQuery(query)
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchQuery(newText)
+                return true
+            }
+        })
 
         tasksAdapter = TasksAdapter(
             onTaskChecked = { taskId, isChecked ->
@@ -137,6 +167,29 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    // Diálogo para seleccionar categoría de FILTRADO (Botón derecho filtros)
+    private fun showFilterCategorySelectionDialog() {
+        val categories = viewModel.categories.value
+        val categoryNames = mutableListOf("Todas las categorías")
+        categoryNames.addAll(categories.map { it.name })
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Filtrar por categoría")
+            .setItems(categoryNames.toTypedArray()) { _, which ->
+                if (which == 0) {
+                    currentFilterCategoryId = null
+                    binding.btnFilterCategory.text = "Categoría"
+                } else {
+                    val selectedCategory = categories[which - 1]
+                    currentFilterCategoryId = selectedCategory.id
+                    binding.btnFilterCategory.text = selectedCategory.name
+                }
+                viewModel.setCategoryFilter(currentFilterCategoryId)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun showAddTaskDialog() {
@@ -238,12 +291,12 @@ class HomeFragment : Fragment() {
                 
                 if (title.isNotEmpty()) {
                     viewModel.updateTask(
-                        id = task.id,
-                        title = title,
-                        description = description,
-                        priority = selectedPriority,
-                        categoryId = selectedCategoryId,
-                        status = task.status
+                        task.copy(
+                            title = title,
+                            description = description,
+                            priority = selectedPriority,
+                            categoryId = selectedCategoryId
+                        )
                     )
                 }
             }
@@ -251,6 +304,7 @@ class HomeFragment : Fragment() {
             .show()
     }
 
+    // Diálogo para seleccionar categoría al CREAR/EDITAR una tarea
     private fun showCategorySelectionDialog(
         currentCategoryId: String,
         onCategorySelected: (Category?) -> Unit
