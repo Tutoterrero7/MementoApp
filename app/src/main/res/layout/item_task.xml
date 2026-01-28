@@ -27,7 +27,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/presence_invisible"
+                android:src="@android:drawable/ic_menu_more"
                 app:tint="?attr/colorPrimary" />
 
             <TextView

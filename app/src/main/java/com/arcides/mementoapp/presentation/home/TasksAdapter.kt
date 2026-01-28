@@ -77,21 +77,21 @@ class TasksAdapter(
         private fun updateStatusUI(task: Task) {
             when (task.status) {
                 Task.TaskStatus.PENDING -> {
-                    binding.statusButton.setImageResource(R.drawable.circle_shape)
+                    binding.statusButton.setImageResource(android.R.drawable.ic_menu_more)
                     binding.statusButton.colorFilter = null
                     binding.statusLabel.text = "Pendiente"
                     binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     binding.root.alpha = 1.0f
                 }
                 Task.TaskStatus.IN_PROGRESS -> {
-                    binding.statusButton.setImageResource(android.R.drawable.presence_away)
+                    binding.statusButton.setImageResource(android.R.drawable.ic_menu_more)
                     binding.statusButton.setColorFilter(Color.parseColor("#FFC107")) // Ámbar/Amarillo
                     binding.statusLabel.text = "En Progreso"
                     binding.taskTitle.paintFlags = binding.taskTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     binding.root.alpha = 1.0f
                 }
                 Task.TaskStatus.COMPLETED -> {
-                    binding.statusButton.setImageResource(android.R.drawable.presence_online)
+                    binding.statusButton.setImageResource(android.R.drawable.ic_menu_more)
                     // Usar Color.parseColor directamente con manejo de errores
                     val greenColor = try {
                         Color.parseColor("#4CAF50")
