@@ -148,5 +148,4 @@
         android:src="@android:drawable/ic_input_add"
         android:contentDescription="Agregar tarea"
         app:backgroundTint="#9C7ACC" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
