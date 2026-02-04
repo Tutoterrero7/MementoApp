@@ -5,7 +5,8 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/splashFragment">
 
-    <!-- Splash Screen -->
+    <!--  Define el flujo de navegación de tu aplicación.-->
+      <!-- Splash Screen -->
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.arcides.mementoapp.presentation.splash.SplashFragment"
@@ -54,5 +55,20 @@
         android:name="com.arcides.mementoapp.presentation.categories.CategoriesFragment"
         android:label="CategoriesFragment"
         tools:layout="@layout/fragment_categories" />
+
+
+    <!-- Ajustes Fragment -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.arcides.mementoapp.presentation.settings.SettingsFragment"
+        android:label="Ajustes"
+        tools:layout="@layout/fragment_settings" />
+
+    <!-- estadisticas Fragment -->
+    <fragment
+        android:id="@+id/statsFragment"
+        android:name="com.arcides.mementoapp.presentation.stats.StatsFragment"
+        android:label="Estadísticas"
+        tools:layout="@layout/fragment_stats" />
 
 </navigation>

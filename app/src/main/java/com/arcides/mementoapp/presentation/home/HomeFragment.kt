@@ -18,6 +18,7 @@ import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentHomeBinding
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
+import com.arcides.mementoapp.presentation.GlobalActionProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -26,7 +27,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(), GlobalActionProvider {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -54,17 +55,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupUI() {
-        binding.toolbar.inflateMenu(R.menu.home_menu)
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_categories -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_categoriesFragment)
-                    true
-                }
-                else -> false
-            }
-        }
-
         binding.btnFilterCategory.setOnClickListener {
             showFilterCategorySelectionDialog()
         }
@@ -102,7 +92,6 @@ class HomeFragment : Fragment() {
 
         tasksAdapter = TasksAdapter(
             onStatusChange = { taskId, newStatus ->
-                // Usamos la función del ViewModel para actualizar el estado específico
                 viewModel.updateTaskStatus(taskId, newStatus)
             },
             onTaskEdit = { task ->
@@ -120,10 +109,6 @@ class HomeFragment : Fragment() {
 
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.isRefreshing = false
-        }
-
-        binding.fabAddTask.setOnClickListener {
-            showAddTaskDialog()
         }
     }
 
@@ -148,7 +133,7 @@ class HomeFragment : Fragment() {
                             }
                             is HomeViewModel.HomeUiState.Error -> {
                                 binding.progressBar.visibility = View.GONE
-                                Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG).show()
+                                showSnackbar(state.message)
                             }
                         }
                     }
@@ -157,12 +142,24 @@ class HomeFragment : Fragment() {
                 launch {
                     viewModel.message.collectLatest { message ->
                         message?.let {
-                            Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show()
+                            showSnackbar(it)
                             viewModel.clearMessage()
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun showSnackbar(message: String) {
+        // Obtenemos el FAB de la Activity para usarlo como ancla
+        val fab = requireActivity().findViewById<View>(R.id.fab_add)
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).apply {
+            // Si el FAB es visible, lo usamos como ancla para que el Snackbar aparezca encima de él
+            if (fab != null && fab.visibility == View.VISIBLE) {
+                anchorView = fab
+            }
+            show()
         }
     }
 
@@ -186,6 +183,10 @@ class HomeFragment : Fragment() {
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    override fun onPrimaryActionClicked() {
+        showAddTaskDialog()
     }
 
     private fun showAddTaskDialog() {
@@ -230,7 +231,7 @@ class HomeFragment : Fragment() {
                         categoryId = selectedCategoryId
                     )
                 } else {
-                    Snackbar.make(binding.root, "El título es requerido", Snackbar.LENGTH_SHORT).show()
+                    showSnackbar("El título es requerido")
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -307,7 +308,7 @@ class HomeFragment : Fragment() {
         val categories = viewModel.categories.value
         
         if (categories.isEmpty()) {
-            Snackbar.make(binding.root, "No hay categorías creadas", Snackbar.LENGTH_SHORT).show()
+            showSnackbar("No hay categorías creadas")
             return
         }
         

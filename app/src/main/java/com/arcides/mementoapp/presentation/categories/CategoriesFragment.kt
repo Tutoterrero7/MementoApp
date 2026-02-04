@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentCategoriesBinding
 import com.arcides.mementoapp.domain.models.Category
+import com.arcides.mementoapp.presentation.GlobalActionProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -23,7 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class CategoriesFragment : Fragment() {
+class CategoriesFragment : Fragment(), GlobalActionProvider {
 
     private var _binding: FragmentCategoriesBinding? = null
     private val binding get() = _binding!!
@@ -48,11 +49,6 @@ class CategoriesFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // Configurar toolbar
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigateUp()
-        }
-
         // Configurar RecyclerView
         categoriesAdapter = CategoriesAdapter(
             onCategoryClick = { category ->
@@ -68,14 +64,8 @@ class CategoriesFragment : Fragment() {
         )
 
         binding.categoriesRecyclerView.apply {
-            // Cambiado de GridLayoutManager(..., 2) a LinearLayoutManager para ocupar todo el ancho
             layoutManager = LinearLayoutManager(requireContext())
             adapter = categoriesAdapter
-        }
-
-        // Botón para añadir categoría
-        binding.fabAddCategory.setOnClickListener {
-            showCreateCategoryDialog()
         }
     }
 
@@ -105,7 +95,11 @@ class CategoriesFragment : Fragment() {
         }
     }
 
-    private fun showCreateCategoryDialog() {
+    override fun onPrimaryActionClicked() {
+        showCreateCategoryDialog()
+    }
+
+    fun showCreateCategoryDialog() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_create_category, null)
         
