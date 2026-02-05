@@ -46,6 +46,7 @@ android {
 dependencies {
     // Hilt
     implementation(libs.hilt.android)
+    implementation(libs.google.material)
     ksp(libs.hilt.compiler)
 
     // UI & Core

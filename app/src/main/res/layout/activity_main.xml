@@ -6,49 +6,31 @@
     android:layout_height="match_parent"
     tools:context=".presentation.MainActivity">
 
-    <!-- Contenedor de fragmentos -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="?attr/actionBarSize"
         app:navGraph="@navigation/nav_graph"
         app:defaultNavHost="true" />
 
-    <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottom_app_bar"
+    <!-- Usamos BottomNavigationView, que en M3 funciona como la NavigationBar oficial -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        app:fabAlignmentMode="center"
-        app:fabCradleMargin="20dp"
-        app:fabCradleRoundedCornerRadius="15dp"
-        app:contentInsetStart="0dp"
-        app:contentInsetEnd="0dp"
-        app:fabCradleVerticalOffset="10dp">
-
-
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottom_nav_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            app:elevation="0dp"
-            app:itemIconSize="20dp"
-            app:labelVisibilityMode="selected"
-            app:menu="@menu/bottom_nav_menu" />
-
-    </com.google.android.material.bottomappbar.BottomAppBar>
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="selected" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="100dp"
         android:contentDescription="Añadir tarea"
-        android:layout_margin="0dp"
-        app:srcCompat="@drawable/ic_add"
-        app:layout_anchor="@id/bottom_app_bar"
-        app:layout_anchorGravity="center" />
+        app:srcCompat="@drawable/ic_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

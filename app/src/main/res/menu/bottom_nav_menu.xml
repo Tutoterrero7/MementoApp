@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/homeFragment"
@@ -8,12 +9,6 @@
         android:id="@+id/categoriesFragment"
         android:icon="@drawable/ic_categories"
         android:title="Categorías" />
-
-    <!-- Elemento vacío para separar los grupos y dejar espacio al FAB -->
-    <item
-        android:id="@+id/placeholder"
-        android:title=""
-        android:enabled="false" />
 
     <item
         android:id="@+id/statsFragment"

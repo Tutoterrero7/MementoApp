@@ -22,24 +22,19 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.fragment_container) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Vincular BottomNavigationView con NavController
-        binding.bottomNavView.setupWithNavController(navController)
+        // Vinculamos la nueva NavigationBarView con el NavController
+        binding.bottomNavigation.setupWithNavController(navController)
 
-        // Controlar visibilidad de la barra (ocultar en Splash y Login)
+        // Gestión de visibilidad (Ocultar en pantallas de inicio/login)
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.splashFragment, R.id.loginFragment -> {
-                    binding.bottomAppBar.visibility = View.GONE
+                    binding.bottomNavigation.visibility = View.GONE
                     binding.fabAdd.visibility = View.GONE
                 }
                 else -> {
-                    binding.bottomAppBar.visibility = View.VISIBLE
+                    binding.bottomNavigation.visibility = View.VISIBLE
                     binding.fabAdd.visibility = View.VISIBLE
-
-                    // Forzamos un re-layout para asegurar que el anclaje sea instantáneo
-                    binding.fabAdd.post {
-                        binding.fabAdd.requestLayout()
-                    }
                 }
             }
         }
