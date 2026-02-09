@@ -22,10 +22,10 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.fragment_container) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Vinculamos la nueva NavigationBarView con el NavController
+        // Vinculamos la BottomNavigationView con el NavController
         binding.bottomNavigation.setupWithNavController(navController)
 
-        // Gestión de visibilidad (Ocultar en pantallas de inicio/login)
+        // Gestión de visibilidad de componentes globales
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.splashFragment, R.id.loginFragment -> {
@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
                     binding.fabAdd.visibility = View.GONE
                 }
                 else -> {
+                    // Visibilidad instantánea para evitar animaciones de escala
                     binding.bottomNavigation.visibility = View.VISIBLE
                     binding.fabAdd.visibility = View.VISIBLE
                 }
@@ -43,8 +44,8 @@ class MainActivity : AppCompatActivity() {
         binding.fabAdd.setOnClickListener {
             val navHost = supportFragmentManager.findFragmentById(R.id.fragment_container) as? NavHostFragment
             val currentFragment = navHost?.childFragmentManager?.fragments?.firstOrNull()
-
-            // Si el fragmento actual sabe manejar la acción global, se la delegamos
+            
+            // Si el fragmento actual implementa GlobalActionProvider, delegamos la acción
             (currentFragment as? GlobalActionProvider)?.onPrimaryActionClicked()
         }
     }

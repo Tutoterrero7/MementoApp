@@ -55,6 +55,19 @@ class HomeFragment : Fragment(), GlobalActionProvider {
     }
 
     private fun setupUI() {
+        // Inflar el menú que contiene el botón de categorías
+        binding.toolbar.inflateMenu(R.menu.home_menu)
+        binding.toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_categories -> {
+                    // Navegar a la pantalla de categorías
+                    findNavController().navigate(R.id.action_homeFragment_to_categoriesFragment)
+                    true
+                }
+                else -> false
+            }
+        }
+
         binding.btnFilterCategory.setOnClickListener {
             showFilterCategorySelectionDialog()
         }

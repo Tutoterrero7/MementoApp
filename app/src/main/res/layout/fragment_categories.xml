@@ -18,6 +18,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
             app:title="Categorías"
             app:titleCentered="false"
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"

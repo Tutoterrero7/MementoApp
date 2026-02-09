@@ -49,6 +49,11 @@ class CategoriesFragment : Fragment(), GlobalActionProvider {
     }
 
     private fun setupUI() {
+        // SOLUCIÓN: Listener para el botón de retroceso en la Toolbar
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
+
         // Configurar RecyclerView
         categoriesAdapter = CategoriesAdapter(
             onCategoryClick = { category ->

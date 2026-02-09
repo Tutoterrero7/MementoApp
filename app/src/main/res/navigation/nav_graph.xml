@@ -5,22 +5,18 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/splashFragment">
 
-    <!--  Define el flujo de navegación de tu aplicación.-->
-      <!-- Splash Screen -->
+    <!-- Splash Screen -->
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.arcides.mementoapp.presentation.splash.SplashFragment"
         android:label="SplashFragment"
         tools:layout="@layout/fragment_splash">
-
         <action
             android:id="@+id/action_splashFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
-
         <action
             android:id="@+id/action_splashFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
-
     </fragment>
 
     <!-- Login Fragment -->
@@ -29,11 +25,9 @@
         android:name="com.arcides.mementoapp.presentation.auth.LoginFragment"
         android:label="LoginFragment"
         tools:layout="@layout/fragment_login">
-
         <action
             android:id="@+id/action_loginFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
-
     </fragment>
 
     <!-- Home Fragment -->
@@ -42,12 +36,17 @@
         android:name="com.arcides.mementoapp.presentation.home.HomeFragment"
         android:label="HomeFragment"
         tools:layout="@layout/fragment_home">
-
         <action
             android:id="@+id/action_homeFragment_to_categoriesFragment"
             app:destination="@id/categoriesFragment" />
-
     </fragment>
+
+    <!-- Calendar Fragment -->
+    <fragment
+        android:id="@+id/calendarFragment"
+        android:name="com.arcides.mementoapp.presentation.calendar.CalendarFragment"
+        android:label="Calendario"
+        tools:layout="@layout/fragment_calendar" />
 
     <!-- Categories Fragment -->
     <fragment
@@ -56,7 +55,6 @@
         android:label="CategoriesFragment"
         tools:layout="@layout/fragment_categories" />
 
-
     <!-- Ajustes Fragment -->
     <fragment
         android:id="@+id/settingsFragment"
@@ -64,7 +62,7 @@
         android:label="Ajustes"
         tools:layout="@layout/fragment_settings" />
 
-    <!-- estadisticas Fragment -->
+    <!-- Estadísticas Fragment -->
     <fragment
         android:id="@+id/statsFragment"
         android:name="com.arcides.mementoapp.presentation.stats.StatsFragment"
