@@ -12,12 +12,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.ItemTaskBinding
 import com.arcides.mementoapp.domain.models.Task
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class TasksAdapter(
     private val onStatusChange: (String, Task.TaskStatus) -> Unit,
     private val onTaskEdit: (Task) -> Unit,
     private val onTaskDeleted: (String) -> Unit
 ) : ListAdapter<Task, TasksAdapter.TaskViewHolder>(TaskDiffCallback()) {
+
+    private val dateTimeFormatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val binding = ItemTaskBinding.inflate(
@@ -40,6 +44,14 @@ class TasksAdapter(
             binding.taskTitle.text = task.title
             binding.taskDescription.text = task.description
             
+            // Fecha y Hora
+            if (task.dueDate != null) {
+                binding.dueDateContainer.visibility = View.VISIBLE
+                binding.taskDueDate.text = dateTimeFormatter.format(task.dueDate)
+            } else {
+                binding.dueDateContainer.visibility = View.GONE
+            }
+
             // Actualizar estilo visual y botones según estado
             updateStatusUI(task)
 
@@ -92,11 +104,10 @@ class TasksAdapter(
                 }
                 Task.TaskStatus.COMPLETED -> {
                     binding.statusButton.setImageResource(android.R.drawable.ic_menu_more)
-                    // Usar Color.parseColor directamente con manejo de errores
                     val greenColor = try {
                         Color.parseColor("#4CAF50")
                     } catch (e: Exception) {
-                        Color.GREEN // Fallback color
+                        Color.GREEN
                     }
                     binding.statusButton.setColorFilter(greenColor)
                     binding.statusLabel.text = "Completada"
@@ -104,11 +115,6 @@ class TasksAdapter(
                     binding.root.alpha = 0.6f
                 }
             }
-        }
-        
-        // Función de ayuda para parsear colores de forma segura ya que Color.parseFilter no existe
-        private fun android.graphics.Color.parseFilter(colorString: String): Int? {
-            return try { android.graphics.Color.parseColor(colorString) } catch (e: Exception) { null }
         }
 
         private fun showStatusPopupMenu(view: View, task: Task) {

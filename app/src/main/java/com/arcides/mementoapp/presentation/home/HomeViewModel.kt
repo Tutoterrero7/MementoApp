@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -82,9 +83,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String) {
+    fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String, dueDate: Date? = null) {
         viewModelScope.launch {
-            taskRepository.createTask(Task(title = title, description = description, priority = priority, categoryId = categoryId))
+            taskRepository.createTask(Task(
+                title = title,
+                description = description,
+                priority = priority,
+                categoryId = categoryId,
+                dueDate = dueDate
+            ))
         }
     }
 

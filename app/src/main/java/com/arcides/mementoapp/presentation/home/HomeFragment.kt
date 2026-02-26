@@ -19,12 +19,19 @@ import com.arcides.mementoapp.databinding.FragmentHomeBinding
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
 import com.arcides.mementoapp.presentation.GlobalActionProvider
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(), GlobalActionProvider {
@@ -35,6 +42,8 @@ class HomeFragment : Fragment(), GlobalActionProvider {
     private lateinit var tasksAdapter: TasksAdapter
     
     private var currentFilterCategoryId: String? = null
+    private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    private val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -210,9 +219,52 @@ class HomeFragment : Fragment(), GlobalActionProvider {
         val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.descriptionInput)
         val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
         val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
+        val dateInput = dialogView.findViewById<TextInputEditText>(R.id.dateInput)
+        val timeInput = dialogView.findViewById<TextInputEditText>(R.id.timeInput)
         
         var selectedCategoryId = ""
         var selectedPriority = Task.Priority.MEDIUM
+        val calendar = Calendar.getInstance()
+        var selectedDate: Date? = null
+        
+        dateInput.setOnClickListener {
+            val datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Seleccionar fecha")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build()
+            
+            datePicker.addOnPositiveButtonClickListener { selection ->
+                val date = Date(selection)
+                val dateCalendar = Calendar.getInstance()
+                dateCalendar.time = date
+                
+                calendar.set(Calendar.YEAR, dateCalendar.get(Calendar.YEAR))
+                calendar.set(Calendar.MONTH, dateCalendar.get(Calendar.MONTH))
+                calendar.set(Calendar.DAY_OF_MONTH, dateCalendar.get(Calendar.DAY_OF_MONTH))
+                
+                selectedDate = calendar.time
+                dateInput.setText(dateFormatter.format(selectedDate!!))
+            }
+            datePicker.show(parentFragmentManager, "DATE_PICKER")
+        }
+        
+        timeInput.setOnClickListener {
+            val timePicker = MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+                .setMinute(calendar.get(Calendar.MINUTE))
+                .setTitleText("Seleccionar hora")
+                .build()
+            
+            timePicker.addOnPositiveButtonClickListener {
+                calendar.set(Calendar.HOUR_OF_DAY, timePicker.hour)
+                calendar.set(Calendar.MINUTE, timePicker.minute)
+                
+                selectedDate = calendar.time
+                timeInput.setText(timeFormatter.format(selectedDate!!))
+            }
+            timePicker.show(parentFragmentManager, "TIME_PICKER")
+        }
         
         categoryButton.setOnClickListener {
             showCategorySelectionDialog(selectedCategoryId) { category ->
@@ -241,7 +293,8 @@ class HomeFragment : Fragment(), GlobalActionProvider {
                         title = title,
                         description = description ?: "",
                         priority = selectedPriority,
-                        categoryId = selectedCategoryId
+                        categoryId = selectedCategoryId,
+                        dueDate = selectedDate
                     )
                 } else {
                     showSnackbar("El título es requerido")
@@ -259,12 +312,61 @@ class HomeFragment : Fragment(), GlobalActionProvider {
         val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.descriptionInput)
         val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
         val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
+        val dateInput = dialogView.findViewById<TextInputEditText>(R.id.dateInput)
+        val timeInput = dialogView.findViewById<TextInputEditText>(R.id.timeInput)
         
         titleInput.setText(task.title)
         descriptionInput.setText(task.description)
         
         var selectedCategoryId = task.categoryId
         var selectedPriority = task.priority
+        val calendar = Calendar.getInstance()
+        var selectedDate: Date? = task.dueDate
+        
+        task.dueDate?.let {
+            calendar.time = it
+            dateInput.setText(dateFormatter.format(it))
+            timeInput.setText(timeFormatter.format(it))
+        }
+        
+        dateInput.setOnClickListener {
+            val datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Seleccionar fecha")
+                .setSelection(selectedDate?.time ?: MaterialDatePicker.todayInUtcMilliseconds())
+                .build()
+            
+            datePicker.addOnPositiveButtonClickListener { selection ->
+                val date = Date(selection)
+                val dateCalendar = Calendar.getInstance()
+                dateCalendar.time = date
+                
+                calendar.set(Calendar.YEAR, dateCalendar.get(Calendar.YEAR))
+                calendar.set(Calendar.MONTH, dateCalendar.get(Calendar.MONTH))
+                calendar.set(Calendar.DAY_OF_MONTH, dateCalendar.get(Calendar.DAY_OF_MONTH))
+                
+                selectedDate = calendar.time
+                dateInput.setText(dateFormatter.format(selectedDate!!))
+            }
+            datePicker.show(parentFragmentManager, "DATE_PICKER")
+        }
+        
+        timeInput.setOnClickListener {
+            val timePicker = MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+                .setMinute(calendar.get(Calendar.MINUTE))
+                .setTitleText("Seleccionar hora")
+                .build()
+            
+            timePicker.addOnPositiveButtonClickListener {
+                calendar.set(Calendar.HOUR_OF_DAY, timePicker.hour)
+                calendar.set(Calendar.MINUTE, timePicker.minute)
+                
+                selectedDate = calendar.time
+                timeInput.setText(timeFormatter.format(selectedDate!!))
+            }
+            timePicker.show(parentFragmentManager, "TIME_PICKER")
+        }
         
         when (task.priority) {
             Task.Priority.LOW -> priorityGroup.check(R.id.priorityLow)
@@ -305,7 +407,8 @@ class HomeFragment : Fragment(), GlobalActionProvider {
                             title = title,
                             description = description,
                             priority = selectedPriority,
-                            categoryId = selectedCategoryId
+                            categoryId = selectedCategoryId,
+                            dueDate = selectedDate
                         )
                     )
                 }
