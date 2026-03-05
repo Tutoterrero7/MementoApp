@@ -1,7 +1,10 @@
 package com.arcides.mementoapp.data.di
 
 import com.arcides.mementoapp.data.repositories.AuthRepositoryImpl
+import com.arcides.mementoapp.data.repositories.CategoryRepository
+import com.arcides.mementoapp.data.repositories.TaskRepositoryImpl
 import com.arcides.mementoapp.domain.repositories.AuthRepository
+import com.arcides.mementoapp.domain.repositories.TaskRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,6 +18,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(
-        authRepositoryImpl: AuthRepositoryImpl
-    ): AuthRepository
+        impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
+
 }

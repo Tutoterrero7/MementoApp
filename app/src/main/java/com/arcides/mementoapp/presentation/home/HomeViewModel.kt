@@ -3,7 +3,7 @@ package com.arcides.mementoapp.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arcides.mementoapp.data.repositories.CategoryRepository
-import com.arcides.mementoapp.data.repositories.TaskRepository
+import com.arcides.mementoapp.domain.repositories.TaskRepository
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
 import dagger.hilt.android.lifecycle.HiltViewModel

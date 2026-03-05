@@ -4,8 +4,11 @@ import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+import java.util.Date
 import java.util.UUID
 
+@Serializable
 @Parcelize
 @Entity(tableName = "categories")
 data class Category(
@@ -15,7 +18,8 @@ data class Category(
     val color: String = "#2196F3", // Color en hexadecimal
     val userId: String = "",
     val taskCount: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    @Serializable(with = DateSerializer::class)
+    val createdAt: Date = Date()
 ) : Parcelable {
 
     companion object {
