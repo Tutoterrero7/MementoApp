@@ -10,23 +10,23 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp">
+        android:padding="20dp">
 
-        <!-- Título -->
+        <!-- CARD 1: INFORMACIÓN ACTUAL -->
         <TextView
             android:id="@+id/tvSettingsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Mi Perfil"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_top_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Card de Información de Perfil -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardProfileInfo"
+            android:id="@+id/cardProfileSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -43,22 +43,22 @@
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/ivProfilePicture"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_launcher_foreground"
                     android:background="#F5F5F5"
                     app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_top_toTopOf="parent"
-                    app:layout_bottom_toBottomOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
                 <TextView
                     android:id="@+id/tvUserName"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="Cargando..."
+                    tools:text="Usuario Nombre"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -73,7 +73,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="email@ejemplo.com"
+                    tools:text="correo@ejemplo.com"
                     android:textSize="14sp"
                     android:textColor="#757575"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -84,120 +84,149 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Sección: Editar Nombre -->
+        <!-- HEADER: EDITAR PERFIL -->
         <TextView
-            android:id="@+id/tvEditProfileHeader"
+            android:id="@+id/tvEditHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="Editar Información"
-            android:textStyle="bold"
+            android:text="Editar Perfil"
             android:textColor="?attr/colorPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_top_toBottomOf="@id/cardProfileInfo" />
+            app:layout_constraintTop_toBottomOf="@id/cardProfileSummary" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilEditName"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        <!-- CARD 2: FORMULARIO DE EDICIÓN -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardEditProfile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Nombre completo"
-            app:layout_constraintTop_toBottomOf="@id/tvEditProfileHeader">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:layout_constraintTop_toBottomOf="@id/tvEditHeader">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditName"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnUpdateProfile"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Guardar Cambios"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_top_toBottomOf="@id/tilEditName" />
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEditName"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nombre completo">
 
-        <!-- Sección: Seguridad -->
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etEditName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUpdateProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Actualizar Nombre" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- HEADER: SEGURIDAD -->
         <TextView
             android:id="@+id/tvSecurityHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="32dp"
             android:text="Seguridad"
-            android:textStyle="bold"
             android:textColor="?attr/colorPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_top_toBottomOf="@id/btnUpdateProfile" />
+            app:layout_constraintTop_toBottomOf="@id/cardEditProfile" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCurrentPassword"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        <!-- CARD 3: SEGURIDAD -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSecurity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Contraseña actual"
-            app:passwordToggleEnabled="true"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
             app:layout_constraintTop_toBottomOf="@id/tvSecurityHeader">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etCurrentPassword"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilNewPassword"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="Nueva contraseña"
-            app:passwordToggleEnabled="true"
-            app:layout_constraintTop_toBottomOf="@id/tilCurrentPassword">
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilCurrentPassword"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Contraseña actual"
+                    app:endIconMode="password_toggle">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNewPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCurrentPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChangePassword"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Cambiar Contraseña"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_top_toBottomOf="@id/tilNewPassword" />
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNewPassword"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Nueva contraseña"
+                    app:endIconMode="password_toggle">
 
-        <!-- Botón: Cerrar Sesión -->
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNewPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnChangePassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Cambiar Contraseña" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ACCIONES FINALES -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="40dp"
             android:text="Cerrar Sesión"
             android:textColor="#D32F2F"
-            app:layout_constraintTop_toBottomOf="@id/btnChangePassword"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="24dp" />
+            app:layout_constraintTop_toBottomOf="@id/cardSecurity"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
