@@ -10,4 +10,5 @@ interface AuthRepository {
     suspend fun logout()
     suspend fun resetPassword(email: String): Result<Unit>
     suspend fun updateProfile(name: String, profilePicture: String?): Result<User>
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit>
 }

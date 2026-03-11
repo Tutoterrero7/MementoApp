@@ -2,7 +2,7 @@ package com.arcides.mementoapp.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arcides.mementoapp.data.repositories.CategoryRepository
+import com.arcides.mementoapp.domain.repositories.CategoryRepository
 import com.arcides.mementoapp.domain.repositories.TaskRepository
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
@@ -23,6 +23,10 @@ class HomeViewModel @Inject constructor(
     private val _statusFilter = MutableStateFlow<Task.TaskStatus?>(null)
     private val _priorityFilter = MutableStateFlow<Task.Priority?>(null)
     private val _categoryFilter = MutableStateFlow<String?>(null)
+
+    // Estado de carga inicial para la sincronización
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing
 
     val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -56,7 +60,29 @@ class HomeViewModel @Inject constructor(
     val message: StateFlow<String?> = _message
 
     init {
-        createDefaultCategories()
+        refreshData()
+    }
+
+    // Sincronizar todo desde Supabase
+    fun refreshData() {
+        viewModelScope.launch {
+            _isSyncing.value = true
+            try {
+                // 1. Asegurar categorías por defecto localmente
+                categoryRepository.createDefaultCategoriesIfNeeded()
+                
+                // 2. Traer categorías de la nube
+                categoryRepository.fetchCategoriesFromRemote()
+                
+                // 3. Traer tareas de la nube
+                taskRepository.fetchTasksFromRemote()
+                
+            } catch (e: Exception) {
+                _message.value = "Error al sincronizar: ${e.message}"
+            } finally {
+                _isSyncing.value = false
+            }
+        }
     }
 
     fun setSearchQuery(query: String?) {
@@ -73,14 +99,6 @@ class HomeViewModel @Inject constructor(
 
     fun setCategoryFilter(categoryId: String?) {
         _categoryFilter.value = categoryId
-    }
-
-    private fun createDefaultCategories() {
-        viewModelScope.launch {
-            try {
-                categoryRepository.createDefaultCategoriesIfNeeded()
-            } catch (e: Exception) { /* Log error */ }
-        }
     }
 
     fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String, dueDate: Date? = null) {
@@ -101,7 +119,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Nueva función para actualizar solo el estado de la tarea (RF9 con 3 estados)
     fun updateTaskStatus(taskId: String, newStatus: Task.TaskStatus) {
         viewModelScope.launch {
             taskRepository.toggleTaskStatus(taskId, newStatus)

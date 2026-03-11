@@ -8,6 +8,8 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,7 +25,8 @@ class AuthRepositoryImpl @Inject constructor(
                 User(
                     id = sbUser?.id ?: "",
                     email = sbUser?.email ?: "",
-                    name = sbUser?.userMetadata?.get("name")?.toString() ?: ""
+                    name = sbUser?.userMetadata?.get("name")?.toString()?.replace("\"", "") ?: "",
+                    profilePicture = sbUser?.userMetadata?.get("profilePicture")?.toString()?.replace("\"", "")
                 )
             }
             else -> null
@@ -38,7 +41,12 @@ class AuthRepositoryImpl @Inject constructor(
             }
             val sbUser = supabaseClient.auth.currentUserOrNull()
             if (sbUser != null) {
-                Result.success(User(id = sbUser.id, email = sbUser.email ?: "", name = sbUser.userMetadata?.get("name")?.toString() ?: ""))
+                Result.success(User(
+                    id = sbUser.id, 
+                    email = sbUser.email ?: "", 
+                    name = sbUser.userMetadata?.get("name")?.toString()?.replace("\"", "") ?: "",
+                    profilePicture = sbUser.userMetadata?.get("profilePicture")?.toString()?.replace("\"", "")
+                ))
             } else {
                 Result.failure(Exception("Login failed: User is null"))
             }
@@ -55,7 +63,11 @@ class AuthRepositoryImpl @Inject constructor(
             }
             val sbUser = supabaseClient.auth.currentUserOrNull()
             if (sbUser != null) {
-                Result.success(User(id = sbUser.id, email = sbUser.email ?: "", name = sbUser.userMetadata?.get("name")?.toString() ?: ""))
+                Result.success(User(
+                    id = sbUser.id, 
+                    email = sbUser.email ?: "", 
+                    name = sbUser.userMetadata?.get("name")?.toString()?.replace("\"", "") ?: ""
+                ))
             } else {
                 Result.failure(Exception("Registration successful, but user session not found"))
             }
@@ -74,8 +86,6 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun resetPassword(email: String): Result<Unit> {
         return try {
-            // Supabase doesn't have a direct 'resetPassword' in the same way, 
-            // usually it's sendResetEmail
             supabaseClient.auth.resetPasswordForEmail(email)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -86,10 +96,14 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun updateProfile(name: String, profilePicture: String?): Result<User> {
         return try {
             supabaseClient.auth.updateUser {
-                // Actualizar metadata del usuario
-                // Nota: La forma exacta puede variar según la versión de la librería, 
-                // pero generalmente se hace vía userMetadata
+                data = buildJsonObject {
+                    put("name", name)
+                    if (profilePicture != null) {
+                        put("profilePicture", profilePicture)
+                    }
+                }
             }
+
             val sbUser = supabaseClient.auth.currentUserOrNull()
             Result.success(User(
                 id = sbUser?.id ?: "",
@@ -97,6 +111,17 @@ class AuthRepositoryImpl @Inject constructor(
                 name = name,
                 profilePicture = profilePicture
             ))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
+        return try {
+            supabaseClient.auth.updateUser {
+                password = newPassword
+            }
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

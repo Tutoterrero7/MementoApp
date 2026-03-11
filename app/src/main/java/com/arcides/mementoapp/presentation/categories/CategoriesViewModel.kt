@@ -2,7 +2,7 @@ package com.arcides.mementoapp.presentation.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arcides.mementoapp.data.repositories.CategoryRepository
+import com.arcides.mementoapp.domain.repositories.CategoryRepository
 import com.arcides.mementoapp.domain.models.Category
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
