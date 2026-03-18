@@ -1,8 +1,10 @@
 package com.arcides.mementoapp.presentation
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.arcides.mementoapp.R
@@ -12,6 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +23,7 @@ class MainActivity : AppCompatActivity() {
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.fragment_container) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
 
         // Vinculamos la BottomNavigationView con el NavController
         binding.bottomNavigation.setupWithNavController(navController)
@@ -28,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         // Gestión de visibilidad de componentes globales
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.splashFragment, R.id.loginFragment -> {
+                R.id.splashFragment, R.id.loginFragment, R.id.resetPasswordFragment -> {
                     binding.bottomNavigation.visibility = View.GONE
                     binding.fabAdd.visibility = View.GONE
                 }
@@ -47,6 +50,24 @@ class MainActivity : AppCompatActivity() {
             
             // Si el fragmento actual implementa GlobalActionProvider, delegamos la acción
             (currentFragment as? GlobalActionProvider)?.onPrimaryActionClicked()
+        }
+
+        // Manejar el Intent si la app se abre por un Deep Link
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.data?.let { uri ->
+            if (uri.scheme == "mementoapp" && uri.host == "reset-password") {
+                if (navController.currentDestination?.id != R.id.resetPasswordFragment) {
+                    navController.navigate(R.id.resetPasswordFragment)
+                }
+            }
         }
     }
 }

@@ -30,6 +30,17 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
+    <!-- Reset Password Fragment -->
+    <fragment
+        android:id="@+id/resetPasswordFragment"
+        android:name="com.arcides.mementoapp.presentation.auth.ResetPasswordFragment"
+        android:label="Nueva Contraseña"
+        tools:layout="@layout/fragment_reset_password">
+        <action
+            android:id="@+id/action_resetPasswordFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+
     <!-- Home Fragment -->
     <fragment
         android:id="@+id/homeFragment"
