@@ -6,18 +6,20 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
-    fun getTasksStream(): Flow<List<Task>>
+    @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getTasksStream(userId: String): Flow<List<Task>>
 
     @Query("""
         SELECT * FROM tasks 
-        WHERE (:query IS NULL OR title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%')
+        WHERE userId = :userId
+        AND (:query IS NULL OR title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%')
         AND (:status IS NULL OR status = :status)
         AND (:priority IS NULL OR priority = :priority)
         AND (:categoryId IS NULL OR categoryId = :categoryId)
         ORDER BY createdAt DESC
     """)
     fun getFilteredTasksStream(
+        userId: String,
         query: String? = null,
         status: Task.TaskStatus? = null,
         priority: Task.Priority? = null,

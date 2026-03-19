@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arcides.mementoapp.domain.repositories.CategoryRepository
 import com.arcides.mementoapp.domain.repositories.TaskRepository
+import com.arcides.mementoapp.domain.repositories.AuthRepository
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow<String?>(null)
@@ -28,16 +30,27 @@ class HomeViewModel @Inject constructor(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing
 
-    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val categories: StateFlow<List<Category>> = authRepository.currentUser
+        .filterNotNull()
+        .flatMapLatest { user ->
+            categoryRepository.getCategoriesStream(user.id)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HomeUiState> = combine(
+        authRepository.currentUser.filterNotNull(),
         _searchQuery, _statusFilter, _priorityFilter, _categoryFilter
-    ) { query, status, priority, categoryId ->
-        Filters(query, status, priority, categoryId)
-    }.flatMapLatest { filters ->
+    ) { user, query, status, priority, categoryId ->
+        user.id to Filters(query, status, priority, categoryId)
+    }.flatMapLatest { (userId, filters) ->
         taskRepository.getFilteredTasksStream(
+            userId = userId,
             query = filters.query,
             status = filters.status,
             priority = filters.priority,
@@ -66,16 +79,18 @@ class HomeViewModel @Inject constructor(
     // Sincronizar todo desde Supabase
     fun refreshData() {
         viewModelScope.launch {
+            val userId = authRepository.currentUser.first()?.id ?: return@launch
+            
             _isSyncing.value = true
             try {
                 // 1. Asegurar categorías por defecto localmente
-                categoryRepository.createDefaultCategoriesIfNeeded()
+                categoryRepository.createDefaultCategoriesIfNeeded(userId)
                 
                 // 2. Traer categorías de la nube
-                categoryRepository.fetchCategoriesFromRemote()
+                categoryRepository.fetchCategoriesFromRemote(userId)
                 
                 // 3. Traer tareas de la nube
-                taskRepository.fetchTasksFromRemote()
+                taskRepository.fetchTasksFromRemote(userId)
                 
             } catch (e: Exception) {
                 _message.value = "Error al sincronizar: ${e.message}"
@@ -103,12 +118,14 @@ class HomeViewModel @Inject constructor(
 
     fun createTask(title: String, description: String, priority: Task.Priority, categoryId: String, dueDate: Date? = null) {
         viewModelScope.launch {
+            val userId = authRepository.currentUser.first()?.id ?: return@launch
             taskRepository.createTask(Task(
                 title = title,
                 description = description,
                 priority = priority,
                 categoryId = categoryId,
-                dueDate = dueDate
+                dueDate = dueDate,
+                userId = userId
             ))
         }
     }

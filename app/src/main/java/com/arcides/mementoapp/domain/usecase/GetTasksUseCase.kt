@@ -10,12 +10,13 @@ class GetTasksUseCase @Inject constructor(
     private val repository: TaskRepository
 ) {
     operator fun invoke(
+        userId: String,
         query: String = "",
         categoryId: String? = null,
         status: Task.TaskStatus? = null,
         sortByPriority: Boolean = false
     ): Flow<List<Task>> {
-        return repository.getTasks().map { tasks ->
+        return repository.getTasks(userId).map { tasks ->
             tasks.filter { task ->
                 (query.isEmpty() || task.title.contains(query, ignoreCase = true)) &&
                 (categoryId == null || task.categoryId == categoryId) &&

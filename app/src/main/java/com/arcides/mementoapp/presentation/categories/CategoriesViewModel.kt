@@ -2,24 +2,28 @@ package com.arcides.mementoapp.presentation.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arcides.mementoapp.domain.repositories.AuthRepository
 import com.arcides.mementoapp.domain.repositories.CategoryRepository
 import com.arcides.mementoapp.domain.models.Category
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CategoriesViewModel @Inject constructor(
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    // Lista de categorías
-    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesStream()
-        .map { categories -> categories }
+    // Lista de categorías vinculada al usuario actual
+    val categories: StateFlow<List<Category>> = authRepository.currentUser
+        .filterNotNull()
+        .flatMapLatest { user ->
+            categoryRepository.getCategoriesStream(user.id)
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -27,12 +31,12 @@ class CategoriesViewModel @Inject constructor(
         )
 
     // Estado de carga
-    private val _isLoading = kotlinx.coroutines.flow.MutableStateFlow(false)
-    val isLoading = _isLoading as kotlinx.coroutines.flow.StateFlow<Boolean>
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
     // Mensajes
-    private val _message = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
-    val message = _message as kotlinx.coroutines.flow.StateFlow<String?>
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message
 
     // Crear categoría
     fun createCategory(name: String, color: String) {
@@ -44,12 +48,18 @@ class CategoriesViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val newCategory = Category(
-                    name = name.trim(),
-                    color = color
-                )
-                categoryRepository.createCategory(newCategory)
-                _message.value = "Categoría creada: $name"
+                val userId = authRepository.currentUser.first()?.id
+                if (userId != null) {
+                    val newCategory = Category(
+                        name = name.trim(),
+                        color = color,
+                        userId = userId
+                    )
+                    categoryRepository.createCategory(newCategory)
+                    _message.value = "Categoría creada: $name"
+                } else {
+                    _message.value = "Error: Usuario no autenticado"
+                }
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
             } finally {
@@ -75,8 +85,11 @@ class CategoriesViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                categoryRepository.deleteCategory(categoryId)
-                _message.value = "Categoría eliminada"
+                val userId = authRepository.currentUser.first()?.id
+                if (userId != null) {
+                    categoryRepository.deleteCategory(categoryId, userId)
+                    _message.value = "Categoría eliminada"
+                }
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
             } finally {
@@ -89,8 +102,11 @@ class CategoriesViewModel @Inject constructor(
     fun createDefaultCategories() {
         viewModelScope.launch {
             try {
-                categoryRepository.createDefaultCategoriesIfNeeded()
-                _message.value = "Categorías por defecto creadas"
+                val userId = authRepository.currentUser.first()?.id
+                if (userId != null) {
+                    categoryRepository.createDefaultCategoriesIfNeeded(userId)
+                    _message.value = "Categorías por defecto creadas"
+                }
             } catch (e: Exception) {
                 _message.value = "Error: ${e.message}"
             }

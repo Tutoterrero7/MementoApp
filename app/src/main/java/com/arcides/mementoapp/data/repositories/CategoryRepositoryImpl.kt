@@ -15,12 +15,16 @@ class CategoryRepositoryImpl @Inject constructor(
     private val supabaseClient: SupabaseClient
 ) : CategoryRepository {
 
-    override fun getCategoriesStream(): Flow<List<Category>> = categoryDao.getCategoriesStream()
+    override fun getCategoriesStream(userId: String): Flow<List<Category>> = categoryDao.getCategoriesStream(userId)
 
-    override suspend fun fetchCategoriesFromRemote() {
+    override suspend fun fetchCategoriesFromRemote(userId: String) {
         try {
             val remoteCategories = supabaseClient.postgrest["categories"]
-                .select()
+                .select {
+                    filter {
+                        eq("userId", userId)
+                    }
+                }
                 .decodeList<Category>()
 
             for (category in remoteCategories) {
@@ -54,8 +58,8 @@ class CategoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteCategory(categoryId: String) {
-        categoryDao.deleteById(categoryId)
+    override suspend fun deleteCategory(categoryId: String, userId: String) {
+        categoryDao.deleteById(categoryId, userId)
         try {
             supabaseClient.postgrest["categories"].delete {
                 filter {
@@ -67,31 +71,31 @@ class CategoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun incrementTaskCount(categoryId: String) {
+    override suspend fun incrementTaskCount(categoryId: String, userId: String) {
         if (categoryId.isNotBlank()) {
-            categoryDao.updateTaskCount(categoryId, 1)
+            categoryDao.updateTaskCount(categoryId, userId, 1)
         }
     }
 
-    override suspend fun decrementTaskCount(categoryId: String) {
+    override suspend fun decrementTaskCount(categoryId: String, userId: String) {
         if (categoryId.isNotBlank()) {
-            categoryDao.updateTaskCount(categoryId, -1)
+            categoryDao.updateTaskCount(categoryId, userId, -1)
         }
     }
 
-    override suspend fun updateTaskCount(categoryId: String, delta: Int) {
+    override suspend fun updateTaskCount(categoryId: String, userId: String, delta: Int) {
         if (categoryId.isNotBlank()) {
-            categoryDao.updateTaskCount(categoryId, delta)
+            categoryDao.updateTaskCount(categoryId, userId, delta)
         }
     }
 
-    override suspend fun hasCategories(): Boolean {
-        return categoryDao.getCount() > 0
+    override suspend fun hasCategories(userId: String): Boolean {
+        return categoryDao.getCount(userId) > 0
     }
 
-    override suspend fun createDefaultCategoriesIfNeeded() {
-        if (!hasCategories()) {
-            val defaultCats = Category.defaultCategories()
+    override suspend fun createDefaultCategoriesIfNeeded(userId: String) {
+        if (!hasCategories(userId)) {
+            val defaultCats = Category.defaultCategories(userId)
             for (category in defaultCats) {
                 createCategory(category)
             }

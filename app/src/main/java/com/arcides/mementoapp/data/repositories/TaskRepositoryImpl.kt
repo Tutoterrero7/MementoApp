@@ -17,19 +17,24 @@ class TaskRepositoryImpl @Inject constructor(
     private val supabaseClient: SupabaseClient
 ) : TaskRepository {
 
-    override fun getTasks(): Flow<List<Task>> = taskDao.getTasksStream()
+    override fun getTasks(userId: String): Flow<List<Task>> = taskDao.getTasksStream(userId)
 
     override fun getFilteredTasksStream(
+        userId: String,
         query: String?,
         status: Task.TaskStatus?,
         priority: Task.Priority?,
         categoryId: String?
-    ): Flow<List<Task>> = taskDao.getFilteredTasksStream(query, status, priority, categoryId)
+    ): Flow<List<Task>> = taskDao.getFilteredTasksStream(userId, query, status, priority, categoryId)
 
-    override suspend fun fetchTasksFromRemote() {
+    override suspend fun fetchTasksFromRemote(userId: String) {
         try {
             val remoteTasks = supabaseClient.postgrest["tasks"]
-                .select()
+                .select {
+                    filter {
+                        eq("userId", userId)
+                    }
+                }
                 .decodeList<Task>()
 
             for (task in remoteTasks) {
@@ -49,7 +54,7 @@ class TaskRepositoryImpl @Inject constructor(
         }
 
         if (task.categoryId.isNotBlank()) {
-            categoryDao.updateTaskCount(task.categoryId, 1)
+            categoryDao.updateTaskCount(task.categoryId, task.userId, 1)
         }
         return task.id
     }
@@ -69,8 +74,8 @@ class TaskRepositoryImpl @Inject constructor(
         }
 
         if (oldCategoryId != task.categoryId) {
-            if (oldCategoryId.isNotBlank()) categoryDao.updateTaskCount(oldCategoryId, -1)
-            if (task.categoryId.isNotBlank()) categoryDao.updateTaskCount(task.categoryId, 1)
+            if (oldCategoryId.isNotBlank()) categoryDao.updateTaskCount(oldCategoryId, task.userId, -1)
+            if (task.categoryId.isNotBlank()) categoryDao.updateTaskCount(task.categoryId, task.userId, 1)
         }
     }
 
@@ -80,7 +85,10 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteTask(taskId: String) {
-        val categoryId = taskDao.getCategoryIdForTask(taskId) ?: ""
+        val task = taskDao.getTaskById(taskId)
+        val categoryId = task?.categoryId ?: ""
+        val userId = task?.userId ?: ""
+        
         taskDao.deleteById(taskId)
         try {
             supabaseClient.postgrest["tasks"].delete {
@@ -91,6 +99,8 @@ class TaskRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        if (categoryId.isNotBlank()) categoryDao.updateTaskCount(categoryId, -1)
+        if (categoryId.isNotBlank() && userId.isNotBlank()) {
+            categoryDao.updateTaskCount(categoryId, userId, -1)
+        }
     }
 }

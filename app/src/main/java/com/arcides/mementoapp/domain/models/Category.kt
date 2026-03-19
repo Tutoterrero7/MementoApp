@@ -37,12 +37,12 @@ data class Category(
             "#607D8B"  // Blue Grey
         )
 
-        // Categorías por defecto
-        fun defaultCategories(): List<Category> = listOf(
-            Category(name = "Personal", color = "#2196F3"),
-            Category(name = "Trabajo", color = "#4CAF50"),
-            Category(name = "Estudio", color = "#FF9800"),
-            Category(name = "Hogar", color = "#F44336")
+        // Categorías por defecto vinculadas al usuario
+        fun defaultCategories(userId: String): List<Category> = listOf(
+            Category(name = "Personal", color = "#2196F3", userId = userId),
+            Category(name = "Trabajo", color = "#4CAF50", userId = userId),
+            Category(name = "Estudio", color = "#FF9800", userId = userId),
+            Category(name = "Hogar", color = "#F44336", userId = userId)
         )
     }
 }
