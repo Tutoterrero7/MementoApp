@@ -4,6 +4,7 @@ import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Date
 import java.util.UUID
@@ -16,8 +17,11 @@ data class Category(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
     val color: String = "#2196F3", // Color en hexadecimal
+    @SerialName("userid")
     val userId: String = "",
+    @SerialName("taskcount")
     val taskCount: Int = 0,
+    @SerialName("createdat")
     @Serializable(with = DateSerializer::class)
     val createdAt: Date = Date()
 ) : Parcelable {

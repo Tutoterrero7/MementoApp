@@ -1,9 +1,12 @@
 package com.arcides.mementoapp.data.repositories
 
+import android.content.Context
 import com.arcides.mementoapp.data.local.TaskDao
 import com.arcides.mementoapp.data.local.CategoryDao
 import com.arcides.mementoapp.domain.models.Task
 import com.arcides.mementoapp.domain.repositories.TaskRepository
+import com.arcides.mementoapp.utils.NotificationScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
@@ -14,8 +17,11 @@ import javax.inject.Singleton
 class TaskRepositoryImpl @Inject constructor(
     private val taskDao: TaskDao,
     private val categoryDao: CategoryDao,
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    @ApplicationContext private val context: Context
 ) : TaskRepository {
+
+    private val notificationScheduler = NotificationScheduler(context)
 
     override fun getTasks(userId: String): Flow<List<Task>> = taskDao.getTasksStream(userId)
 
@@ -32,13 +38,16 @@ class TaskRepositoryImpl @Inject constructor(
             val remoteTasks = supabaseClient.postgrest["tasks"]
                 .select {
                     filter {
-                        eq("userId", userId)
+                        eq("userid", userId)
                     }
                 }
                 .decodeList<Task>()
 
             for (task in remoteTasks) {
                 taskDao.insertTask(task)
+                if (task.status == Task.TaskStatus.PENDING) {
+                    notificationScheduler.scheduleTaskNotification(task)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -47,6 +56,10 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun createTask(task: Task): String {
         taskDao.insertTask(task)
+        if (task.status == Task.TaskStatus.PENDING) {
+            notificationScheduler.scheduleTaskNotification(task)
+        }
+        
         try {
             supabaseClient.postgrest["tasks"].insert(task)
         } catch (e: Exception) {
@@ -62,6 +75,12 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun updateTask(task: Task) {
         val oldCategoryId = taskDao.getCategoryIdForTask(task.id) ?: ""
         taskDao.updateTask(task)
+
+        if (task.status == Task.TaskStatus.COMPLETED) {
+            notificationScheduler.cancelTaskNotification(task.id)
+        } else {
+            notificationScheduler.scheduleTaskNotification(task)
+        }
 
         try {
             supabaseClient.postgrest["tasks"].update(task) {
@@ -88,6 +107,8 @@ class TaskRepositoryImpl @Inject constructor(
         val task = taskDao.getTaskById(taskId)
         val categoryId = task?.categoryId ?: ""
         val userId = task?.userId ?: ""
+        
+        notificationScheduler.cancelTaskNotification(taskId)
         
         taskDao.deleteById(taskId)
         try {

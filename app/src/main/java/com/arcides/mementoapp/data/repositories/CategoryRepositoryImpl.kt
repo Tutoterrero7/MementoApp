@@ -22,7 +22,7 @@ class CategoryRepositoryImpl @Inject constructor(
             val remoteCategories = supabaseClient.postgrest["categories"]
                 .select {
                     filter {
-                        eq("userId", userId)
+                        eq("userid", userId)
                     }
                 }
                 .decodeList<Category>()
