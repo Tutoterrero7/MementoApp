@@ -123,7 +123,13 @@ class LoginFragment : Fragment() {
 
                         is AuthViewModel.AuthState.Success -> {
                             showLoading(false)
-                            Snackbar.make(binding.root, state.message, Snackbar.LENGTH_SHORT).show()
+                            val snackbar = Snackbar.make(binding.root, state.message, Snackbar.LENGTH_SHORT)
+                            val params = snackbar.view.layoutParams as FrameLayout.LayoutParams
+                            params.gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
+                            params.topMargin = 100 // Ajuste para que no esté pegado al borde superior
+                            snackbar.view.layoutParams = params
+                            snackbar.show()
+
                             if (state.message.contains("Login") || state.message.contains("exit")) {
                                 navigateToHome()
                                 viewModel.resetState()

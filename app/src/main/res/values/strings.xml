@@ -1,5 +1,13 @@
 <resources>
     <string name="app_name">MementoApp</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="stats_title">Estadísticas</string>
+    <string name="completed_label">Completado</string>
+    <string name="total_tasks">Tareas Totales</string>
+    <string name="pending_tasks">Pendientes</string>
+    <string name="tasks_completed_summary">Tareas terminadas con éxito</string>
+    <string name="priority_focus_title">Enfoque de Prioridad</string>
+    <string name="total_accumulated_label">Total acumulado: </string>
+    <string name="high_priority">Alta</string>
+    <string name="medium_priority">Media</string>
+    <string name="low_priority">Baja</string>
 </resources>
