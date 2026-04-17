@@ -6,32 +6,33 @@
     android:layout_height="match_parent"
     tools:context=".presentation.MainActivity">
 
-    <!-- BARRA DE NAVEGACIÓN: Anclada siempre al fondo -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:labelVisibilityMode="selected"
-        app:menu="@menu/bottom_nav_menu" />
-
-    <!-- CONTENEDOR DE FRAGMENTOS: Su límite inferior es la parte superior de la barra -->
+    <!-- CONTENEDOR DE FRAGMENTOS: Se extiende hasta el fondo para eliminar el espacio fantasma -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:defaultNavHost="true"
-        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav_graph" />
 
-    <!-- FAB: Posicionado respecto al contenedor (no a la barra) para evitar el salto -->
+    <!-- BARRA DE NAVEGACIÓN: Anclada al fondo, flotando sobre el contenedor -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:labelVisibilityMode="selected"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <!-- FAB: Posicionado respecto a la barra de navegación para mantener su lugar original -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
@@ -39,7 +40,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="Añadir tarea"
-        app:layout_constraintBottom_toBottomOf="@id/fragment_container"
+        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_add"
         app:elevation="6dp" />
