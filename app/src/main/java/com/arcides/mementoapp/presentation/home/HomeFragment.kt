@@ -214,40 +214,40 @@ class HomeFragment : Fragment(), GlobalActionProvider {
     private fun showAddTaskDialog() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_create_task, null)
-        
+
         val titleInput = dialogView.findViewById<TextInputEditText>(R.id.titleInput)
         val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.descriptionInput)
         val priorityGroup = dialogView.findViewById<RadioGroup>(R.id.priorityGroup)
         val categoryButton = dialogView.findViewById<Button>(R.id.categoryButton)
         val dateInput = dialogView.findViewById<TextInputEditText>(R.id.dateInput)
         val timeInput = dialogView.findViewById<TextInputEditText>(R.id.timeInput)
-        
+
         var selectedCategoryId = ""
         var selectedPriority = Task.Priority.MEDIUM
         val calendar = Calendar.getInstance()
         var selectedDate: Date? = null
-        
+
         dateInput.setOnClickListener {
             val datePicker = MaterialDatePicker.Builder.datePicker()
                 .setTitleText("Seleccionar fecha")
                 .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
                 .build()
-            
+
             datePicker.addOnPositiveButtonClickListener { selection ->
                 val date = Date(selection)
                 val dateCalendar = Calendar.getInstance()
                 dateCalendar.time = date
-                
+
                 calendar.set(Calendar.YEAR, dateCalendar.get(Calendar.YEAR))
                 calendar.set(Calendar.MONTH, dateCalendar.get(Calendar.MONTH))
                 calendar.set(Calendar.DAY_OF_MONTH, dateCalendar.get(Calendar.DAY_OF_MONTH))
-                
+
                 selectedDate = calendar.time
                 dateInput.setText(dateFormatter.format(selectedDate!!))
             }
             datePicker.show(parentFragmentManager, "DATE_PICKER")
         }
-        
+
         timeInput.setOnClickListener {
             val timePicker = MaterialTimePicker.Builder()
                 .setTimeFormat(TimeFormat.CLOCK_24H)
@@ -255,24 +255,24 @@ class HomeFragment : Fragment(), GlobalActionProvider {
                 .setMinute(calendar.get(Calendar.MINUTE))
                 .setTitleText("Seleccionar hora")
                 .build()
-            
+
             timePicker.addOnPositiveButtonClickListener {
                 calendar.set(Calendar.HOUR_OF_DAY, timePicker.hour)
                 calendar.set(Calendar.MINUTE, timePicker.minute)
-                
+
                 selectedDate = calendar.time
                 timeInput.setText(timeFormatter.format(selectedDate!!))
             }
             timePicker.show(parentFragmentManager, "TIME_PICKER")
         }
-        
+
         categoryButton.setOnClickListener {
             showCategorySelectionDialog(selectedCategoryId) { category ->
                 selectedCategoryId = category?.id ?: ""
                 categoryButton.text = category?.name ?: "Seleccionar categoría"
             }
         }
-        
+
         priorityGroup.setOnCheckedChangeListener { _, checkedId ->
             selectedPriority = when (checkedId) {
                 R.id.priorityLow -> Task.Priority.LOW
@@ -280,14 +280,14 @@ class HomeFragment : Fragment(), GlobalActionProvider {
                 else -> Task.Priority.MEDIUM
             }
         }
-        
+
         MaterialAlertDialogBuilder(requireContext())
             .setView(dialogView)
             .setTitle("Nueva Tarea")
             .setPositiveButton("Crear") { _, _ ->
                 val title = titleInput.text?.toString()?.trim()
                 val description = descriptionInput.text?.toString()?.trim()
-                
+
                 if (!title.isNullOrEmpty()) {
                     viewModel.createTask(
                         title = title,
