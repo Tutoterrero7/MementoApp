@@ -41,6 +41,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun changePassword(currentPassword: String, newPassword: String) {
+        if (currentPassword.isBlank() || newPassword.isBlank()) {
+            _message.value = "Ambas contraseñas son requeridas"
+            return
+        }
+
+        if (newPassword.length < 6) {
+            _message.value = "La nueva contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
+        viewModelScope.launch {
+            _loading.value = true
+            val result = authRepository.changePassword(currentPassword, newPassword)
+            result.onSuccess {
+                _message.value = "Contraseña cambiada con éxito"
+            }.onFailure {
+                _message.value = it.message ?: "Error al cambiar la contraseña"
+            }
+            _loading.value = false
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()

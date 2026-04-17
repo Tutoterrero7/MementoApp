@@ -44,6 +44,12 @@ class SettingsFragment : Fragment() {
             viewModel.updateName(newName)
         }
 
+        binding.btnChangePassword.setOnClickListener {
+            val currentPassword = binding.etCurrentPassword.text.toString()
+            val newPassword = binding.etNewPassword.text.toString()
+            viewModel.changePassword(currentPassword, newPassword)
+        }
+
         binding.btnLogout.setOnClickListener {
             viewModel.logout()
         }
