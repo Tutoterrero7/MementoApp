@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -31,10 +32,13 @@ class SettingsFragment : Fragment(), GlobalActionProvider {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
     private val viewModel: SettingsViewModel by viewModels()
-    private val homeViewModel: HomeViewModel by viewModels()
+    private val homeViewModel: HomeViewModel by activityViewModels()
 
     private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     private val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    // Copia local de categorías, actualizada reactivamente
+    private var cachedCategories: List<Category> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -100,6 +104,12 @@ class SettingsFragment : Fragment(), GlobalActionProvider {
                         }
                     }
                 }
+
+                launch {
+                    homeViewModel.categories.collectLatest { categories ->
+                        cachedCategories = categories
+                    }
+                }
             }
         }
     }
@@ -115,13 +125,24 @@ class SettingsFragment : Fragment(), GlobalActionProvider {
             dateFormatter = dateFormatter,
             timeFormatter = timeFormatter,
             onCategorySelectRequested = { _, onSelect: (Category?) -> Unit ->
-                val categories = homeViewModel.categories.value
+                val categories = cachedCategories
+
+                if (categories.isEmpty()) {
+                    com.google.android.material.snackbar.Snackbar
+                        .make(requireView(), "No hay categorías. Créalas en Inicio → Categorías", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                        .show()
+                    return@showAddTaskDialog
+                }
+
                 val categoryNames = categories.map { it.name }.toTypedArray()
 
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Seleccionar categoría")
                     .setItems(categoryNames) { _, which ->
                         onSelect(categories[which])
+                    }
+                    .setNeutralButton("Sin categoría") { _, _ ->
+                        onSelect(null)
                     }
                     .setNegativeButton("Cancelar", null)
                     .show()
