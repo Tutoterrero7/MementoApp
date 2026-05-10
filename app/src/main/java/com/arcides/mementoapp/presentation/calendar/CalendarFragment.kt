@@ -15,8 +15,10 @@ import com.arcides.mementoapp.R
 import com.arcides.mementoapp.databinding.FragmentCalendarBinding
 import com.arcides.mementoapp.domain.models.Category
 import com.arcides.mementoapp.domain.models.Task
+import com.arcides.mementoapp.presentation.GlobalActionProvider
 import com.arcides.mementoapp.presentation.home.HomeViewModel
 import com.arcides.mementoapp.presentation.home.TasksAdapter
+import com.arcides.mementoapp.utils.TaskDialogHelper
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -31,14 +33,14 @@ import java.util.Date
 import java.util.Locale
 
 @AndroidEntryPoint
-class CalendarFragment : Fragment() {
+class CalendarFragment : Fragment(), GlobalActionProvider {
 
     private var _binding: FragmentCalendarBinding? = null
     private val binding get() = _binding!!
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var tasksAdapter: TasksAdapter
     private var selectedDate: Date = Calendar.getInstance().time
-    
+
     private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     private val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
 
@@ -191,7 +193,9 @@ class CalendarFragment : Fragment() {
         val categories = viewModel.categories.value
 
         if (categories.isEmpty()) {
-            onCategorySelected(null)
+            com.google.android.material.snackbar.Snackbar
+                .make(binding.root, "No hay categorías. Créalas en la sección Inicio → Categorías", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -247,7 +251,7 @@ class CalendarFragment : Fragment() {
         val filtered = currentTasks.filter { task ->
             task.dueDate?.let { isSameDay(it, selectedDate) } ?: false
         }
-        
+
         tasksAdapter.submitList(filtered)
         binding.emptyCalendarText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
         binding.calendarRecyclerView.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
@@ -258,6 +262,26 @@ class CalendarFragment : Fragment() {
         val cal2 = Calendar.getInstance().apply { time = date2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                 cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    override fun onPrimaryActionClicked() {
+        showAddTaskDialog()
+    }
+
+    private fun showAddTaskDialog() {
+        TaskDialogHelper.showAddTaskDialog(
+            context = requireContext(),
+            fragmentManager = parentFragmentManager,
+            dateFormatter = dateFormatter,
+            timeFormatter = timeFormatter,
+            initialDate = selectedDate,
+            onCategorySelectRequested = { _, onSelect: (Category?) -> Unit ->
+                showCategorySelectionDialog("", onSelect)
+            },
+            onTaskCreated = { title, description, priority, categoryId, dueDate ->
+                viewModel.createTask(title, description, priority, categoryId, dueDate)
+            }
+        )
     }
 
     override fun onDestroyView() {
