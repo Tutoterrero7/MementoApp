@@ -10,4 +10,15 @@
     <string name="high_priority">Alta</string>
     <string name="medium_priority">Media</string>
     <string name="low_priority">Baja</string>
+
+    <!-- Nuevas estadísticas -->
+    <string name="section_priority">Distribución por prioridad</string>
+    <string name="section_deadlines">Fechas límite</string>
+    <string name="section_categories">Por categoría</string>
+    <string name="overdue_tasks">Vencidas</string>
+    <string name="on_time_tasks">A tiempo</string>
+    <string name="no_deadline_tasks">Sin fecha</string>
+    <string name="in_progress_tasks">En progreso</string>
+    <string name="no_categories_stats">Crea categorías para ver esta sección</string>
+    <string name="tasks_label">tareas</string>
 </resources>

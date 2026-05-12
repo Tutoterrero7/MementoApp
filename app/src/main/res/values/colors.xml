@@ -12,4 +12,6 @@
     <color name="priority_medium">#FFC107</color>
     <color name="priority_low">#4CAF50</color>
     <color name="task_pending">#FF9800</color>
+    <color name="stats_completed">#4CAF50</color>
+    <color name="stats_in_progress">#2196F3</color>
 </resources>
