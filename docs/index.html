@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Memento — Tu memoria personal</title>
+  <title>Memento · recuerda lo importante</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -101,10 +101,10 @@
 
     .hero h1 {
       font-family: 'DM Serif Display', serif;
-      font-size: clamp(3.5rem, 9vw, 7rem);
+      font-size: clamp(3rem, 8vw, 6rem);
       font-weight: 400;
-      line-height: 1;
-      letter-spacing: -0.03em;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
       color: var(--text);
       opacity: 0;
       animation: fadeUp 0.9s 0.35s forwards;
@@ -119,7 +119,7 @@
       margin-top: 1.75rem;
       font-size: 1.1rem;
       color: var(--muted);
-      max-width: 500px;
+      max-width: 550px;
       font-weight: 300;
       opacity: 0;
       animation: fadeUp 0.9s 0.5s forwards;
@@ -449,9 +449,9 @@
 
   <!-- HERO -->
   <section class="hero">
-    <p class="hero-label">Aplicación Android · Notas &amp; Recordatorios</p>
-    <h1>Tu memoria,<br /><em>organizada.</em></h1>
-    <p class="hero-sub">Memento es la app que te ayuda a capturar ideas, recordar tareas y mantener el control de tu día a día sin esfuerzo.</p>
+    <p class="hero-label">Aplicación Android · Tareas, recordatorios y sincronización en la nube</p>
+    <h1>Memento <em>recuerda lo importante</em></h1>
+    <p class="hero-sub">Organiza tu día a día con tareas, categorías de colores, calendario interactivo, notificaciones automáticas y estadísticas de productividad. Todo sincronizado en la nube con Supabase.</p>
     <div class="hero-cta">
       <a href="#descargar" class="btn-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -478,33 +478,43 @@
       <div class="features-grid">
         <div class="feature-card reveal">
           <span class="feature-icon">📝</span>
-          <h3 class="feature-title">Notas rápidas</h3>
-          <p class="feature-desc">Captura ideas al instante con un editor limpio y sin distracciones. Tu pensamiento, inmediato.</p>
+          <h3 class="feature-title">Tareas completas</h3>
+          <p class="feature-desc">Crea, edita, elimina y cambia el estado (Pendiente, En Progreso, Completada). Título, descripción, fecha, hora y prioridad.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">🏷️</span>
+          <h3 class="feature-title">Categorías con colores</h3>
+          <p class="feature-desc">Crea categorías personalizadas, asígnales un color y organiza visualmente tus tareas.</p>
         </div>
         <div class="feature-card reveal">
           <span class="feature-icon">🔔</span>
-          <h3 class="feature-title">Recordatorios</h3>
-          <p class="feature-desc">Programa alertas y nunca olvides una tarea importante. Notificaciones precisas cuando las necesitas.</p>
+          <h3 class="feature-title">Notificaciones automáticas</h3>
+          <p class="feature-desc">Recibe recordatorios puntuales en la fecha y hora que programes. Nunca olvides nada.</p>
         </div>
         <div class="feature-card reveal">
-          <span class="feature-icon">🗂️</span>
-          <h3 class="feature-title">Organización</h3>
-          <p class="feature-desc">Categoriza y encuentra tus notas en segundos. Una estructura intuitiva que se adapta a ti.</p>
+          <span class="feature-icon">📅</span>
+          <h3 class="feature-title">Calendario interactivo</h3>
+          <p class="feature-desc">Vista mensual con todas tus tareas. Toca un día y consulta o añade tareas fácilmente.</p>
         </div>
         <div class="feature-card reveal">
-          <span class="feature-icon">🔒</span>
-          <h3 class="feature-title">Privacidad</h3>
-          <p class="feature-desc">Tus notas son tuyas. Almacenamiento local, sin servidores externos, sin rastreo.</p>
+          <span class="feature-icon">☁️</span>
+          <h3 class="feature-title">Sincronización en la nube</h3>
+          <p class="feature-desc">Tus tareas y categorías se sincronizan entre todos tus dispositivos. Con Supabase y PostgreSQL.</p>
         </div>
         <div class="feature-card reveal">
-          <span class="feature-icon">🌙</span>
-          <h3 class="feature-title">Modo oscuro</h3>
-          <p class="feature-desc">Una interfaz cuidada tanto de día como de noche. Diseñada para ser usada cómodamente.</p>
+          <span class="feature-icon">💾</span>
+          <h3 class="feature-title">Copias de seguridad automáticas</h3>
+          <p class="feature-desc">Tu información está segura. Copias de seguridad periódicas en la nube sin que tengas que hacer nada.</p>
         </div>
         <div class="feature-card reveal">
-          <span class="feature-icon">⚡</span>
-          <h3 class="feature-title">Rendimiento nativo</h3>
-          <p class="feature-desc">Desarrollada en Kotlin con Android Studio. Rápida, fluida y optimizada para Android.</p>
+          <span class="feature-icon">🔍</span>
+          <h3 class="feature-title">Filtros y búsqueda</h3>
+          <p class="feature-desc">Filtra por categoría, prioridad o estado. Ordena por prioridad y busca por palabras clave.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">📊</span>
+          <h3 class="feature-title">Estadísticas de productividad</h3>
+          <p class="feature-desc">Visualiza tu progreso semanal y mensual: tareas completadas frente a pendientes.</p>
         </div>
       </div>
     </div>
@@ -518,18 +528,21 @@
       <p class="section-label reveal">Stack tecnológico</p>
       <h2 class="section-title reveal">Construida con<br /><em>tecnología moderna.</em></h2>
       <p class="reveal" style="color: var(--muted); max-width: 560px; font-size: 0.95rem;">
-        Memento utiliza las herramientas más actuales del ecosistema Android para ofrecer una experiencia nativa de alta calidad.
+        Memento combina lo mejor del ecosistema Android con un backend potente y escalable.
       </p>
       <div class="tech-list reveal">
         <span class="tech-tag">Kotlin</span>
         <span class="tech-tag">Android Studio</span>
-        <span class="tech-tag">Jetpack Compose</span>
-        <span class="tech-tag">Room Database</span>
-        <span class="tech-tag">MVVM Architecture</span>
-        <span class="tech-tag">Coroutines</span>
-        <span class="tech-tag">Material Design 3</span>
-        <span class="tech-tag">WorkManager</span>
-        <span class="tech-tag">Android 8.0+</span>
+        <span class="tech-tag">Jetpack Compose (UI)</span>
+        <span class="tech-tag">MVVM + Clean Architecture</span>
+        <span class="tech-tag">Room (offline-first)</span>
+        <span class="tech-tag">Supabase (PostgreSQL)</span>
+        <span class="tech-tag">Autenticación Supabase</span>
+        <span class="tech-tag">Sincronización en tiempo real</span>
+        <span class="tech-tag">AlarmManager</span>
+        <span class="tech-tag">Navigation Component</span>
+        <span class="tech-tag">Dagger Hilt</span>
+        <span class="tech-tag">Coroutines & Flow</span>
       </div>
 
       <div class="stats-row" style="margin-top: 4rem;">
@@ -538,16 +551,12 @@
           <span class="stat-label">Kotlin</span>
         </div>
         <div class="stat-item reveal">
-          <span class="stat-number">Android</span>
-          <span class="stat-label">Plataforma</span>
+          <span class="stat-number">PostgreSQL</span>
+          <span class="stat-label">en la nube</span>
         </div>
         <div class="stat-item reveal">
-          <span class="stat-number">Local</span>
-          <span class="stat-label">Almacenamiento</span>
-        </div>
-        <div class="stat-item reveal">
-          <span class="stat-number">0</span>
-          <span class="stat-label">Permisos innecesarios</span>
+          <span class="stat-number">Local + Cloud</span>
+          <span class="stat-label">sincronización</span>
         </div>
       </div>
     </div>
@@ -563,8 +572,8 @@
       <div class="download-box reveal">
         <div class="download-icon">📱</div>
         <h3 class="download-title">Memento para Android</h3>
-        <p class="download-meta">Versión 1.0.0 &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; ~5 MB</p>
-        <!-- CAMBIA ESTE HREF POR LA URL DE TU APK EN GITHUB RELEASES -->
+        <p class="download-meta">Versión 1.0.0 &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; ~6 MB</p>
+        <!-- mas adelante implementar la el pak aqui -->
         <a href="https://github.com/Tutoterrero7/MementoApp/releases/latest/download/memento.apk"
            class="download-btn" download>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -585,7 +594,7 @@
       <a href="#funcionalidades">Funcionalidades</a>
       <a href="#descargar">Descargar</a>
     </div>
-    <p class="footer-copy">© 2025 MementoApp</p>
+    <p class="footer-copy">© 2025 Memento · recuerda lo importante</p>
   </footer>
 
   <script>
