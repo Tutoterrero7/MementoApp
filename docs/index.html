@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memento — Tu memoria personal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ede6;
+      --muted: #888880;
+      --accent: #c8b89a;
+      --accent-soft: rgba(200,184,154,0.12);
+      --accent-glow: rgba(200,184,154,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+    }
+
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(200,184,154,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(3.5rem, 9vw, 7rem);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.9s 0.35s forwards;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      margin-top: 1.75rem;
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 500px;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.5s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.65s forwards;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      background: var(--accent);
+      color: #0d0d0d;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      border-radius: 2px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); transform: translateY(-1px); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 1s 1.2s forwards;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s infinite;
+    }
+
+    /* DIVIDER */
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* SECTION BASE */
+    section { padding: 6rem 2rem; }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title em { font-style: italic; color: var(--accent); }
+
+    /* FEATURES */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+      margin-top: 3.5rem;
+    }
+
+    .feature-card {
+      padding: 2.5rem 2rem;
+      background: var(--surface);
+      border: none;
+      transition: background 0.25s;
+    }
+    .feature-card:hover { background: #1c1c1c; }
+
+    .feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+
+    .feature-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* TECH STACK */
+    .tech-section { background: var(--surface); }
+
+    .tech-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    .tech-tag {
+      padding: 0.5rem 1.2rem;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      border-radius: 1px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .tech-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* STATS */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+      margin-top: 4rem;
+    }
+
+    .stat-item {
+      padding: 2rem 1.5rem;
+      background: var(--surface);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.5rem;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* DOWNLOAD */
+    .download-section { text-align: center; }
+
+    .download-box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 3rem;
+      padding: 3rem 4rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .download-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--accent), transparent);
+    }
+
+    .download-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .download-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+    }
+
+    .download-meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 1rem;
+      padding: 1rem 2.5rem;
+      background: var(--accent);
+      color: #0d0d0d;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-radius: 2px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .download-btn:hover { opacity: 0.88; transform: translateY(-2px); }
+
+    .download-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-copy {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s, transform 0.7s;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { display: none; }
+      .download-box { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <span class="nav-logo">Memento</span>
+    <div class="nav-links">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#tecnologia">Tecnología</a>
+      <a href="#descargar">Descargar</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-label">Aplicación Android · Notas &amp; Recordatorios</p>
+    <h1>Tu memoria,<br /><em>organizada.</em></h1>
+    <p class="hero-sub">Memento es la app que te ayuda a capturar ideas, recordar tareas y mantener el control de tu día a día sin esfuerzo.</p>
+    <div class="hero-cta">
+      <a href="#descargar" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar APK
+      </a>
+      <a href="https://github.com/Tutoterrero7/MementoApp" target="_blank" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Ver código fuente
+      </a>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      Scroll
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FEATURES -->
+  <section id="funcionalidades">
+    <div class="container">
+      <p class="section-label reveal">Funcionalidades</p>
+      <h2 class="section-title reveal">Todo lo que necesitas<br /><em>en un solo lugar.</em></h2>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <span class="feature-icon">📝</span>
+          <h3 class="feature-title">Notas rápidas</h3>
+          <p class="feature-desc">Captura ideas al instante con un editor limpio y sin distracciones. Tu pensamiento, inmediato.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">🔔</span>
+          <h3 class="feature-title">Recordatorios</h3>
+          <p class="feature-desc">Programa alertas y nunca olvides una tarea importante. Notificaciones precisas cuando las necesitas.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">🗂️</span>
+          <h3 class="feature-title">Organización</h3>
+          <p class="feature-desc">Categoriza y encuentra tus notas en segundos. Una estructura intuitiva que se adapta a ti.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">🔒</span>
+          <h3 class="feature-title">Privacidad</h3>
+          <p class="feature-desc">Tus notas son tuyas. Almacenamiento local, sin servidores externos, sin rastreo.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">🌙</span>
+          <h3 class="feature-title">Modo oscuro</h3>
+          <p class="feature-desc">Una interfaz cuidada tanto de día como de noche. Diseñada para ser usada cómodamente.</p>
+        </div>
+        <div class="feature-card reveal">
+          <span class="feature-icon">⚡</span>
+          <h3 class="feature-title">Rendimiento nativo</h3>
+          <p class="feature-desc">Desarrollada en Kotlin con Android Studio. Rápida, fluida y optimizada para Android.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- TECH STACK -->
+  <section id="tecnologia" class="tech-section">
+    <div class="container">
+      <p class="section-label reveal">Stack tecnológico</p>
+      <h2 class="section-title reveal">Construida con<br /><em>tecnología moderna.</em></h2>
+      <p class="reveal" style="color: var(--muted); max-width: 560px; font-size: 0.95rem;">
+        Memento utiliza las herramientas más actuales del ecosistema Android para ofrecer una experiencia nativa de alta calidad.
+      </p>
+      <div class="tech-list reveal">
+        <span class="tech-tag">Kotlin</span>
+        <span class="tech-tag">Android Studio</span>
+        <span class="tech-tag">Jetpack Compose</span>
+        <span class="tech-tag">Room Database</span>
+        <span class="tech-tag">MVVM Architecture</span>
+        <span class="tech-tag">Coroutines</span>
+        <span class="tech-tag">Material Design 3</span>
+        <span class="tech-tag">WorkManager</span>
+        <span class="tech-tag">Android 8.0+</span>
+      </div>
+
+      <div class="stats-row" style="margin-top: 4rem;">
+        <div class="stat-item reveal">
+          <span class="stat-number">100%</span>
+          <span class="stat-label">Kotlin</span>
+        </div>
+        <div class="stat-item reveal">
+          <span class="stat-number">Android</span>
+          <span class="stat-label">Plataforma</span>
+        </div>
+        <div class="stat-item reveal">
+          <span class="stat-number">Local</span>
+          <span class="stat-label">Almacenamiento</span>
+        </div>
+        <div class="stat-item reveal">
+          <span class="stat-number">0</span>
+          <span class="stat-label">Permisos innecesarios</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- DOWNLOAD -->
+  <section id="descargar" class="download-section">
+    <div class="container">
+      <p class="section-label reveal">Descarga</p>
+      <h2 class="section-title reveal">Prueba <em>Memento</em><br />en tu dispositivo.</h2>
+      <div class="download-box reveal">
+        <div class="download-icon">📱</div>
+        <h3 class="download-title">Memento para Android</h3>
+        <p class="download-meta">Versión 1.0.0 &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; ~5 MB</p>
+        <!-- CAMBIA ESTE HREF POR LA URL DE TU APK EN GITHUB RELEASES -->
+        <a href="https://github.com/Tutoterrero7/MementoApp/releases/latest/download/memento.apk"
+           class="download-btn" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar APK
+        </a>
+        <p class="download-note">Requiere activar "Instalar desde fuentes desconocidas" en ajustes de Android</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-logo">Memento</span>
+    <div class="footer-links">
+      <a href="https://github.com/Tutoterrero7/MementoApp" target="_blank">GitHub</a>
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#descargar">Descargar</a>
+    </div>
+    <p class="footer-copy">© 2025 MementoApp</p>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
