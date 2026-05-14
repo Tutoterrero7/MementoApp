@@ -16,28 +16,19 @@
 - Categorías personalizables con colores
 - Filtros, ordenación y búsqueda
 - Calendario interactivo
-- Notificaciones automáticas (AlarmManager)
+- Notificaciones automáticas
 - Sincronización en la nube (Supabase) y copias de seguridad
 - Estadísticas de productividad semanal/mensual
 
 ## 🛠️ Stack
 
-- Kotlin · Android Studio · Jetpack Compose  
-- MVVM + Clean Architecture  
-- Room (local) + Supabase (PostgreSQL)  
+- Kotlin · Android Studio · Jetpack Compose
+- MVVM + Clean Architecture
+- Room (local) + Supabase (PostgreSQL)
 - Dagger Hilt · Coroutines · Navigation Component
 
 ## 🚀 Ejecutar en desarrollo
 
-1. Clona el repo  
-2. Abre en Android Studio  
-3. Configura tus credenciales de Supabase en `local.properties`  
-4. Ejecuta
-
-## 👤 Autor
-
-Arcides Manuel Mateo Terrero – DAM, Instituto Puig Castellar, 2025-2026
-
-## 📄 Licencia
-
-CC BY-NC-ND 3.0 ES
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/Tutoterrero7/MementoApp.git
